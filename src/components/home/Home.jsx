@@ -95,7 +95,7 @@ export default function Home() {
     <div className="bg-gradient-to-b from-blue-50 to-white min-h-screen font-sans relative">
       {/* Hero Section */}
       <motion.div
-        className="relative flex flex-col md:flex-row items-center justify-between min-h-[60vh] md:h-[80vh] p-6 sm:p-8 md:p-10 rounded-3xl shadow-2xl w-[95%] sm:w-[90%] max-w-7xl mx-auto mt-4 md:mt-5 overflow-hidden"
+        className="relative flex flex-col md:flex-row items-center justify-between min-h-[60vh] md:h-[80vh] p-6 sm:p-8 md:p-10 rounded-3xl shadow-2xl w-[95%] sm:w-[90%] max-w-11xl mx-auto mt-4 md:mt-5 overflow-hidden"
         style={{
           backgroundImage: `url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80)`,
           backgroundSize: 'cover',

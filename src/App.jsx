@@ -78,6 +78,7 @@ import BookAppointment from "./components/bookappoinment/BookAppointment";
 import AdminPanel from "./components/admin/AdminPanel";
 import { AuthProvider } from "./context/AuthContext";
 import ResetPassword from "./components/ResetPassowrd/ResetPassword";
+import 'aos/dist/aos.css';
 
 export default function App() {
   return (
