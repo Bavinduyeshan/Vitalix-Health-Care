@@ -454,245 +454,416 @@
 
 //correct g
 
-
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaUsers, FaUserMd, FaCalendarCheck } from "react-icons/fa";
+import { FaUsers, FaUserMd, FaCalendarCheck, FaFileDownload, FaPlus, FaEdit, FaSearch } from "react-icons/fa";
+import profileimg from "../../assets/profileimg.jpg";
+import { useNavigate } from "react-router-dom";
+import {  FaEye } from "react-icons/fa";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("Dashboard");
-  const adminUsername = "Bavindu"; // Placeholder (replace with auth logic)
+  const adminUsername = "Bavindu";
+
+
+
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole"); // Clear role
+    setIsLoggedIn(false);
+    setIsAdmin(false); // Reset admin status
+    setProfileOpen(false);
+    setMenuOpen(false);
+    navigate("/");
+  };
 
   // State for data
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [medicalRecords, setMedicalRecords] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [diseases, setDiseases] = useState([]);
 
-  // Modal states for Doctors
+  // Search states
+  const [doctorSearchId, setDoctorSearchId] = useState("");
+  const [patientSearchId, setPatientSearchId] = useState("");
+  const [appointmentSearchId, setAppointmentSearchId] = useState("");
+  const [medicalRecordSearchId, setMedicalRecordSearchId] = useState("");
+  const [userSearchId, setUserSearchId] = useState("");
+  const [diseaseSearchId, setDiseaseSearchId] = useState("");
+
+  // Modal states
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
   const [editDoctor, setEditDoctor] = useState(null);
-  const initialDoctorState = { 
-    id: "",
-    firstname: "",
-    lastname: "",
-    phonenumber: "",
-    email: "",
-    specilization: "",
-    userId: "",
-    experience: "",
-    education: "",
-   };
+  const initialDoctorState = { id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" };
   const [doctorFormData, setDoctorFormData] = useState(initialDoctorState);
 
-  // Modal states for Patients
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [editPatient, setEditPatient] = useState(null);
-  const initialPatientState = { 
-    patientId: "",
-        userId: "",
-        firstname: "",
-        lastname: "",
-      email: "",
-        phone: "",
-        dateOfBirth: "",
-        address: "",
-        gender: "",
-        createdDate: "",
-        lastModifiedDate: "",
-  };
+  const initialPatientState = { patientId: "", userId: "", firstname: "", lastname: "", email: "", phone: "", dateOfBirth: "", address: "", gender: "", createdDate: "", lastModifiedDate: "" };
   const [patientFormData, setPatientFormData] = useState(initialPatientState);
 
-  // Modal states for Appointments
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState(null);
-  const initialAppointmentState = { id: "", patientId: "", doctorId: "", date: "", status: "Pending" };
+  const initialAppointmentState = { AppoinmentID: "", patientId: "", doctorId: "",diseasename:"", diagnosticdata: "", treatments: "" ,reporturl:"",createdAt:""};
   const [appointmentFormData, setAppointmentFormData] = useState(initialAppointmentState);
 
+  const [isMedicalRecordModalOpen, setIsMedicalRecordModalOpen] = useState(false);
+  const [editMedicalRecord, setEditMedicalRecord] = useState(null);
+  const initialMedicalRecordState = { recordid: "", patientId: "", doctorId: "",diseasename:"", diagnosticdata: "", treatments: "" ,reporturl:"",createdAt:""};
+  const [medicalRecordFormData, setMedicalRecordFormData] = useState(initialMedicalRecordState);
+
+
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const initialUserState = { userId: "", username: "", email: "", password: "", role: "", createdDate: "" };
+  const [userFormData, setUserFormData] = useState(initialUserState);
+
+  const [isDiseaseModalOpen, setIsDiseaseModalOpen] = useState(false);
+  const [editDisease, setEditDisease] = useState(null);
+  const initialDiseaseState = { id: "", name: "" };
+  const [diseaseFormData, setDiseaseFormData] = useState(initialDiseaseState);
+
   // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.2 } },
-  };
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  };
+  const containerVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.2 } } };
+  const itemVariants = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 
-  // Fetch data on mount (placeholder for API calls)
+  // Fetch data on mount
   useEffect(() => {
-    // Simulate API fetch with static data
-    // setDoctors([
-    //   { id: 1, name: "Dr. John Smith", specialty: "Cardiologist", contact: "john.smith@healthcarehub.com" },
-    //   { id: 2, name: "Dr. Emily Johnson", specialty: "Neurologist", contact: "emily.johnson@healthcarehub.com" },
-    // ]);
-    // setPatients([
-    //   { id: 1, name: "Jane Doe", email: "jane.doe@example.com", phone: "123-456-7890" },
-    //   { id: 2, name: "Tom Wilson", email: "tom.wilson@example.com", phone: "234-567-8901" },
-    // ]);
-    // setAppointments([
-    //   { id: 1, patientId: 1, doctorId: 1, date: "2025-03-25T10:00", status: "Pending" },
-    //   { id: 2, patientId: 2, doctorId: 2, date: "2025-03-26T14:00", status: "Confirmed" },
-    // ]);
-    // Replace with actual API calls:
-    // fetch("http://localhost:8080/doctors", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
-    //   .then(res => res.json()).then(data => setDoctors(data));
-    // fetch("http://localhost:8080/patients", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
-    //   .then(res => res.json()).then(data => setPatients(data));
-    // fetch("http://localhost:8080/appointments", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
-    //   .then(res => res.json()).then(data => setAppointments(data));
-
     const token = localStorage.getItem("token");
-  // Fetch Doctors
-  fetch("http://localhost:8082/doctors/getAll", {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return res.json();
-    })
+    fetch("http://localhost:8082/doctors/getAll", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
+      .then((data) => {
+        const mappedDoctors = data.map((doctor) => ({
+          id: doctor.doctor_Id || "", firstname: doctor.firstname || "", lastname: doctor.lastname || "",
+          phonenumber: doctor.phonenumber || "", email: doctor.email || "", specilization: doctor.specilization || doctor.specialization || "",
+          userId: doctor.userId || "", experience: doctor.experience || "", education: doctor.education || "",
+        }));
+        setDoctors(mappedDoctors);
+      })
+      .catch((error) => console.error("Error fetching doctors:", error));
+
+    fetch("http://localhost:8083/pateints/patients/getAll", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        const mappedPatients = data.map((patient) => ({
+          patientId: patient.patientId || "", userId: patient.userId || "", firstname: patient.firstname || "", lastname: patient.lastname || "",
+          email: patient.email || "", phone: patient.phone || "", dateOfBirth: patient.dateOfBirth || "", address: patient.address || "",
+          gender: patient.gender || "", createdDate: patient.createdDate || "", lastModifiedDate: patient.lastModifiedDate || "",
+        }));
+        setPatients(mappedPatients);
+      })
+      .catch((error) => console.error("Error fetching patients:", error));
+
+    fetch("http://localhost:8086/appoinments/getAll", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => setAppointments(data))
+      .catch((error) => console.error("Error fetching appointments:", error));
+
+      fetch("http://localhost:8081/medical-records/getAll", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const mappedMedicalRecords = data.map((medicalRecord) => ({
+          recordid: medicalRecord.id || "",
+          patientId: medicalRecord.patientID || "", // Match backend field name (patientID)
+          doctorId: medicalRecord.doctor_Id || "",  // Corrected from doctor_Id
+          diseasename: medicalRecord.disease?.name || "",
+          diagnosticdata: medicalRecord.diagnosticData || "",
+          treatments: medicalRecord.treatments || "",
+          reporturl: medicalRecord.reportUrl || "",
+          createdAt: medicalRecord.createdAt || "",
+        }));
+        setMedicalRecords(mappedMedicalRecords); // Set the mapped data
+        console.log("Mapped Medical Records:", mappedMedicalRecords); // Debug
+      })
+      .catch((error) => console.error("Error fetching medical records:", error));
+
+      // Fetch Users
+    fetch("http://localhost:8080/users/getAll", { headers: { Authorization: `Bearer ${token}` } }) // Adjust endpoint as needed
+    .then((res) => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
     .then((data) => {
-      console.log("Doctors Data:", data); // Log raw data for debugging
-      const mappedDoctors = data.map((doctor) => ({
-        id: doctor.doctor_Id || "",
-        firstname: doctor.firstname || "",
-        lastname: doctor.lastname || "",
-        phonenumber: doctor.phonenumber || "",
-        email: doctor.email || doctor.emial || "",
-        specilization: doctor.specilization || doctor.specialization || "",
-        userId: doctor.userId || "",
-        experience: doctor.experience || "",
-        education: doctor.education || "",
+      const mappedUsers = data.map((user) => ({
+        userId: user.userId || "", username: user.username || "", email: user.email || "",
+        password: user.password || "", role: user.role || "", createdDate: user.createdDate || "",
       }));
-      setDoctors(mappedDoctors);
-      console.log("Mapped Doctors:", mappedDoctors); // Log mapped data
+      setUsers(mappedUsers);
+      console.log("Mapped Users:", mappedUsers);
     })
-    .catch((error) => console.error("Error fetching doctors:", error));
-  fetch("http://localhost:8083/pateints/patients/getAll", { headers: { Authorization: `Bearer ${token}` } })
-    .then((res) => res.json())
+    .catch((error) => console.error("Error fetching users:", error));
+
+  // Fetch Diseases
+  fetch("http://localhost:8081/diseases/getAll", { headers: { Authorization: `Bearer ${token}` } }) // Adjust endpoint as needed
+    .then((res) => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
     .then((data) => {
-      console.log("Doctors Data:", data); // Log raw data for debugging
-      const mappedPatients = data.map((patients) => ({
-        patientId:patients.patientId|| "",
-        userId:patients.userId || "",
-        firstname:patients.firstname || "",
-        lastname:patients.lastname || "",
-      email: patients.email || "",
-        phone: patients.phone || "",
-        dateOfBirth: patients.dateOfBirth ||"",
-        address: patients.address |"",
-        gender: patients.gender ||"",
-        createdDate: patients.createdDate ||"",
-        lastModifiedDate: patients.lastModifiedDate ||"",
+      const mappedDiseases = data.map((disease) => ({
+        id: disease.id || "", name: disease.name || "",
       }));
-      setPatients(mappedPatients)
-  });
-  fetch("http://localhost:8080/appointments", { headers: { Authorization: `Bearer ${token}` } })
-    .then((res) => res.json())
-    .then((data) => setAppointments(data));
+      setDiseases(mappedDiseases);
+      console.log("Mapped Diseases:", mappedDiseases);
+    })
+    .catch((error) => console.error("Error fetching diseases:", error));
+
+
+
+
   }, []);
 
-  // Doctors CRUD Handlers
-  const openDoctorModal = (doctor = null) => {
-    setEditDoctor(doctor);
-    setDoctorFormData(doctor || initialDoctorState);
-    setIsDoctorModalOpen(true);
+  const downloadReportUrl = (url, recordId) => {
+    fetch(url, {
+      method: "GET",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        const urlObject = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = urlObject;
+        link.download = `Medical_Record_${recordId}_Report_${new Date().toISOString().split("T")[0]}.pdf`;
+        link.click();
+        URL.revokeObjectURL(urlObject);
+      })
+      .catch((error) => {
+        console.error("Error downloading report:", error);
+        alert("Failed to download report. Please check the URL.");
+      });
   };
-  const closeDoctorModal = () => {
-    setIsDoctorModalOpen(false);
-    setEditDoctor(null);
-    setDoctorFormData(initialDoctorState);
-  };
+  
+  // CRUD Handlers
+
+        // CRUD Handlers for Users
+        const openUserModal = (user = null) => { setEditUser(user); setUserFormData(user || initialUserState); setIsUserModalOpen(true); };
+        const closeUserModal = () => { setIsUserModalOpen(false); setEditUser(null); setUserFormData(initialUserState); };
+        const handleUserChange = (e) => setUserFormData({ ...userFormData, [e.target.name]: e.target.value });
+        const handleUserSubmit = (e) => {
+          e.preventDefault();
+          const token = localStorage.getItem("token");
+          const method = editUser ? "PUT" : "POST";
+          const url = editUser ? `http://localhost:8080/users/${editUser.userId}` : "http://localhost:8080/users"; // Adjust endpoint
+          fetch(url, { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(userFormData) })
+            .then((res) => res.json())
+            .then((data) => {
+              if (editUser) setUsers(users.map((u) => (u.userId === data.userId ? data : u)));
+              else setUsers([...users, data]);
+              closeUserModal();
+            })
+            .catch((error) => console.error("Error saving user:", error));
+        };
+        const handleUserDelete = (userId) => {
+          if (window.confirm("Are you sure?")) {
+            const token = localStorage.getItem("token");
+            fetch(`http://localhost:8080/users/${userId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+              .then(() => setUsers(users.filter((u) => u.userId !== userId)))
+              .catch((error) => console.error("Error deleting user:", error));
+          }
+        };
+      
+        // CRUD Handlers for Diseases
+        const openDiseaseModal = (disease = null) => { setEditDisease(disease); setDiseaseFormData(disease || initialDiseaseState); setIsDiseaseModalOpen(true); };
+        const closeDiseaseModal = () => { setIsDiseaseModalOpen(false); setEditDisease(null); setDiseaseFormData(initialDiseaseState); };
+        const handleDiseaseChange = (e) => setDiseaseFormData({ ...diseaseFormData, [e.target.name]: e.target.value });
+        const handleDiseaseSubmit = (e) => {
+          e.preventDefault();
+          const token = localStorage.getItem("token");
+          const method = editDisease ? "PUT" : "POST";
+          const url = editDisease ? `http://localhost:8080/diseases/${editDisease.id}` : "http://localhost:8080/diseases"; // Adjust endpoint
+          fetch(url, { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(diseaseFormData) })
+            .then((res) => res.json())
+            .then((data) => {
+              if (editDisease) setDiseases(diseases.map((d) => (d.id === data.id ? data : d)));
+              else setDiseases([...diseases, data]);
+              closeDiseaseModal();
+            })
+            .catch((error) => console.error("Error saving disease:", error));
+        };
+        const handleDiseaseDelete = (id) => {
+          if (window.confirm("Are you sure?")) {
+            const token = localStorage.getItem("token");
+            fetch(`http://localhost:8080/diseases/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+              .then(() => setDiseases(diseases.filter((d) => d.id !== id)))
+              .catch((error) => console.error("Error deleting disease:", error));
+          }
+        };
+
+  const openDoctorModal = (doctor = null) => { setEditDoctor(doctor); setDoctorFormData(doctor || initialDoctorState); setIsDoctorModalOpen(true); };
+  const closeDoctorModal = () => { setIsDoctorModalOpen(false); setEditDoctor(null); setDoctorFormData(initialDoctorState); };
   const handleDoctorChange = (e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value });
-  const handleDoctorSubmit = (e) => {
-    e.preventDefault();
-    if (editDoctor) {
-      setDoctors(doctors.map((d) => (d.id === editDoctor.id ? { ...doctorFormData, id: d.id } : d)));
-    } else {
-      setDoctors([...doctors, { ...doctorFormData, id: Date.now() }]);
-    }
-    closeDoctorModal();
-  };
-  const handleDoctorDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this doctor?")) {
-      setDoctors(doctors.filter((d) => d.id !== id));
-    }
-  };
+  const handleDoctorSubmit = (e) => { e.preventDefault(); /* Add API call */ closeDoctorModal(); };
+  const handleDoctorDelete = (id) => { if (window.confirm("Are you sure?")) setDoctors(doctors.filter((d) => d.id !== id)); };
 
-  // Patients CRUD Handlers
-  const openPatientModal = (patient = null) => {
-    setEditPatient(patient);
-    setPatientFormData(patient || initialPatientState);
-    setIsPatientModalOpen(true);
-  };
-  const closePatientModal = () => {
-    setIsPatientModalOpen(false);
-    setEditPatient(null);
-    setPatientFormData(initialPatientState);
-  };
+  const openPatientModal = (patient = null) => { setEditPatient(patient); setPatientFormData(patient || initialPatientState); setIsPatientModalOpen(true); };
+  const closePatientModal = () => { setIsPatientModalOpen(false); setEditPatient(null); setPatientFormData(initialPatientState); };
   const handlePatientChange = (e) => setPatientFormData({ ...patientFormData, [e.target.name]: e.target.value });
-  const handlePatientSubmit = (e) => {
+  const handlePatientSubmit = (e) => { e.preventDefault(); /* Add API call */ closePatientModal(); };
+  const handlePatientDelete = (id) => { if (window.confirm("Are you sure?")) setPatients(patients.filter((p) => p.patientId !== id)); };
+
+  const openAppointmentModal = (appointment = null) => { setEditAppointment(appointment); setAppointmentFormData(appointment || initialAppointmentState); setIsAppointmentModalOpen(true); };
+  const closeAppointmentModal = () => { setIsAppointmentModalOpen(false); setEditAppointment(null); setAppointmentFormData(initialAppointmentState); };
+  const handleAppointmentChange = (e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value });
+  const handleAppointmentSubmit = (e) => { e.preventDefault(); /* Add API call */ closeAppointmentModal(); };
+  const handleAppointmentDelete = (id) => { if (window.confirm("Are you sure?")) setAppointments(appointments.filter((a) => a.id !== id)); };
+
+  const openMedicalRecordModal = (medicalRecords = null) => { setEditMedicalRecord(medicalRecords); setMedicalRecordFormData(medicalRecords || initialMedicalRecordState); setIsMedicalRecordModalOpen(true); };
+  const closeMedicalRecordModal = () => { setIsMedicalRecordModalOpen(false); setEditMedicalRecord(null); setMedicalRecordFormData(initialMedicalRecordState); };
+  const handleMedicalRecordChange = (e) => setMedicalRecordFormData({ ...medicalRecordFormData, [e.target.name]: e.target.value });
+  const handleMedicalRecordSubmit = (e) => {
     e.preventDefault();
-    if (editPatient) {
-      setPatients(patients.map((p) => (p.id === editPatient.id ? { ...patientFormData, id: p.id } : p)));
-    } else {
-      setPatients([...patients, { ...patientFormData, id: Date.now() }]);
-    }
-    closePatientModal();
+    const token = localStorage.getItem("token");
+    const method = editMedicalRecord ? "PUT" : "POST";
+    const url = editMedicalRecord ? `http://localhost:8080/medical-records/${editMedicalRecord.id}` : "http://localhost:8080/medical-records";
+    fetch(url, { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(medicalRecordFormData) })
+      .then((res) => res.json())
+      .then((data) => {
+        if (editMedicalRecord) setMedicalRecords(medicalRecords.map((r) => (r.id === data.id ? data : r)));
+        else setMedicalRecords([...medicalRecords, data]);
+        closeMedicalRecordModal();
+      })
+      .catch((error) => console.error("Error saving medical record:", error));
   };
-  const handlePatientDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this patient?")) {
-      setPatients(patients.filter((p) => p.id !== id));
+  const handleMedicalRecordDelete = (id) => {
+    if (window.confirm("Are you sure?")) {
+      const token = localStorage.getItem("token");
+      fetch(`http://localhost:8080/medical-records/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+        .then(() => setMedicalRecords(medicalRecords.filter((r) => r.id !== id)))
+        .catch((error) => console.error("Error deleting medical record:", error));
     }
   };
 
-  // Appointments CRUD Handlers
-  const openAppointmentModal = (appointment = null) => {
-    setEditAppointment(appointment);
-    setAppointmentFormData(appointment || initialAppointmentState);
-    setIsAppointmentModalOpen(true);
+  // Report Generation Functions
+  const downloadReport = (data, filename) => {
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${filename}_${new Date().toISOString().split("T")[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
-  const closeAppointmentModal = () => {
-    setIsAppointmentModalOpen(false);
-    setEditAppointment(null);
-    setAppointmentFormData(initialAppointmentState);
+
+  const generateAllDoctorsReport = () => {
+    const url = "http://localhost:8087/reports/report/all"; // Replace with your Spring Boot endpoint
+  
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+      .then(response => {
+        if (response.ok) {
+          return response.blob(); // Assuming the report is returned as a file (e.g., PDF or CSV)
+        }
+        throw new Error("Failed to generate report");
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "All_Doctors_Report.pdf"; // Customize the file name and extension as needed
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch(error => {
+        console.error("Error generating report:", error);
+      });
   };
-  const handleAppointmentChange = (e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value });
-  const handleAppointmentSubmit = (e) => {
-    e.preventDefault();
-    if (editAppointment) {
-      setAppointments(appointments.map((a) => (a.id === editAppointment.id ? { ...appointmentFormData, id: a.id } : a)));
-    } else {
-      setAppointments([...appointments, { ...appointmentFormData, id: Date.now() }]);
-    }
-    closeAppointmentModal();
+  const generateAllPatientsReport = () => downloadReport(patients, "All_Patients_Report");
+  const generateAllAppointmentsReport = () => downloadReport(appointments, "All_Appointments_Report");
+  const generateAllMedicalRecordsReport = () => downloadReport(medicalRecords, "All_Medical_Records_Report");
+  const generateAllUsersReport = () => downloadReport(users, "All_Users_Report");
+  const generateAllDiseasesReport = () => downloadReport(diseases, "All_Diseases_Report");
+
+  const generateSpecificDoctorReport = () => {
+    if (!doctorSearchId) return alert("Please enter a Doctor ID");
+  
+    const token = localStorage.getItem("token");
+    fetch(`http://localhost:8087/reports/report/${doctorSearchId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        //"Content-Type": "application/json",removed because we are getting a pdf
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.blob(); // Handle as blob for file download
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Doctor_${doctorSearchId}_Report_${new Date().toISOString().split("T")[0]}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((error) => {
+        console.error("Error fetching doctor report:", error);
+        alert("Failed to generate report. Doctor not found or server error.");
+      });
   };
-  const handleAppointmentDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this appointment?")) {
-      setAppointments(appointments.filter((a) => a.id !== id));
-    }
+  const generateSpecificPatientReport = () => {
+    if (!patientSearchId) return alert("Please enter a Patient ID");
+    const patientRecords = medicalRecords.filter((r) => r.patientId === patientSearchId);
+    if (patientRecords.length) downloadReport(patientRecords, `Patient_${patientSearchId}_Medical_Records`);
+    else alert("No records found for this patient");
+  };
+
+  const generateSpecificAppointmentReport = () => {
+    if (!appointmentSearchId) return alert("Please enter an Appointment ID");
+    const appointment = appointments.find((a) => a.id === appointmentSearchId);
+    if (appointment) downloadReport(appointment, `Appointment_${appointmentSearchId}_Report`);
+    else alert("Appointment not found");
+  };
+
+  const generateSpecificMedicalRecordReport = () => {
+    if (!medicalRecordSearchId) return alert("Please enter a Medical Record ID");
+    const record = medicalRecords.find((r) => r.id === medicalRecordSearchId);
+    if (record) downloadReport(record, `Medical_Record_${medicalRecordSearchId}_Report`);
+    else alert("Medical record not found");
+  };
+
+  const generateSpecificUserReport = () => {
+    if (!userSearchId) return alert("Please enter a User ID");
+    const user = users.find((u) => u.userId.toString() === userSearchId);
+    if (user) downloadReport(user, `User_${userSearchId}_Report`);
+    else alert("User not found");
+  };
+  const generateSpecificDiseaseReport = () => {
+    if (!diseaseSearchId) return alert("Please enter a Disease ID");
+    const disease = diseases.find((d) => d.id.toString() === diseaseSearchId);
+    if (disease) downloadReport(disease, `Disease_${diseaseSearchId}_Report`);
+    else alert("Disease not found");
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
-      <motion.div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-9" variants={containerVariants} initial="hidden" animate="visible">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 font-sans">
+      <motion.div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8" variants={containerVariants} initial="hidden" animate="visible">
+        
         {/* Header */}
-        <motion.div variants={itemVariants}>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl text-blue-500 font-bold mb-4">
+        <motion.div variants={itemVariants} className="flex items-center space-x-4">
+        <img src={profileimg} alt="" className="w-36 h-36 object-cover rounded-full" />
+          <h1 className="text-3xl sm:text-4xl md:text-5xl text-blue-700 font-extrabold mb-6 tracking-tight ">
+          
             Hello, {adminUsername}
           </h1>
         </motion.div>
 
         {/* Menu Bar */}
-        <motion.div
-          className="bg-white rounded-full shadow-md p-2 sm:p-3 flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-4 mb-6 sm:mb-8"
-          variants={itemVariants}
-        >
-          {["Dashboard", "Doctors", "Patients", "Appointments", "Logout"].map((section) => (
+        <motion.div className="bg-white rounded-xl shadow-lg p-3 flex flex-wrap justify-center sm:justify-start gap-3 mb-8" variants={itemVariants}>
+          {["Dashboard","Users", "Doctors", "Patients", "Appointments", "Medical Records","Diseases", "Reports", "Logout"].map((section) => (
             <button
               key={section}
-              className={`text-blue-600 hover:bg-blue-100 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-sm sm:text-base font-medium transition-all duration-300 ${
-                activeSection === section ? "bg-blue-100" : ""
+              className={`text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-all duration-300 ${
+                activeSection === section ? "bg-blue-100 text-blue-800" : ""
               }`}
               onClick={() => setActiveSection(section)}
             >
@@ -704,116 +875,235 @@ export default function AdminDashboard() {
         {/* Content Sections */}
         <motion.div key={activeSection} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
           {activeSection === "Dashboard" && (
-            <>
-              {/* Stats Boxes */}
-              <motion.div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8" variants={containerVariants}>
-                <motion.div className="bg-white p-4 sm:p-6 rounded-lg shadow-md flex items-center space-x-4 hover:shadow-lg transition-all duration-300" variants={itemVariants} whileHover={{ scale: 1.03 }}>
-                  <FaUsers className="text-blue-500 text-3xl sm:text-4xl" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-700">Number of Patients</h3>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">{patients.length}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="bg-white p-4 sm:p-6 rounded-lg shadow-md flex items-center space-x-4 hover:shadow-lg transition-all duration-300" variants={itemVariants} whileHover={{ scale: 1.03 }}>
-                  <FaUserMd className="text-blue-500 text-3xl sm:text-4xl" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-700">Number of Doctors</h3>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">{doctors.length}</p>
-                  </div>
-                </motion.div>
-                <motion.div className="bg-white p-4 sm:p-6 rounded-lg shadow-md flex items-center space-x-4 hover:shadow-lg transition-all duration-300" variants={itemVariants} whileHover={{ scale: 1.03 }}>
-                  <FaCalendarCheck className="text-blue-500 text-3xl sm:text-4xl" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-700">Number of Appointments</h3>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">{appointments.length}</p>
-                  </div>
-                </motion.div>
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8" variants={containerVariants}>
+              <motion.div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:shadow-xl transition-all duration-300 border border-gray-100" variants={itemVariants} whileHover={{ scale: 1.05 }}>
+                <FaUsers className="text-blue-600 text-4xl" />
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">Patients</h3>
+                  <p className="text-3xl font-bold text-blue-600">{patients.length}</p>
+                </div>
               </motion.div>
+              <motion.div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:shadow-xl transition-all duration-300 border border-gray-100" variants={itemVariants} whileHover={{ scale: 1.05 }}>
+                <FaUserMd className="text-blue-600 text-4xl" />
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">Doctors</h3>
+                  <p className="text-3xl font-bold text-blue-600">{doctors.length}</p>
+                </div>
+              </motion.div>
+              <motion.div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:shadow-xl transition-all duration-300 border border-gray-100" variants={itemVariants} whileHover={{ scale: 1.05 }}>
+                <FaCalendarCheck className="text-blue-600 text-4xl" />
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">Appointments</h3>
+                  <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
 
-              {/* Recent Activity */}
-              <motion.div className="bg-white p-4 sm:p-6 rounded-lg shadow-md" variants={itemVariants}>
-                <h2 className="text-xl sm:text-2xl font-semibold text-blue-900 mb-4">Recent Activity</h2>
-                <ul className="space-y-3 text-gray-600 text-sm sm:text-base">
-                  <li className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Added Dr. John Smith - 3/24/2025, 10:30 AM</span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Patient "Jane Doe" booked an appointment - 3/24/2025, 9:15 AM</span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span>Updated "Book Appointment" service - 3/23/2025, 2:45 PM</span>
-                  </li>
-                </ul>
-              </motion.div>
-            </>
+          {/* Users Section */}
+          {activeSection === "Users" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-blue-900">Users</h2>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openUserModal()}>
+                  <FaPlus /> Add User
+                </button>
+              </div>
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by User ID"
+                  value={userSearchId}
+                  onChange={(e) => setUserSearchId(e.target.value)}
+                  className="p-2 border rounded-lg w-full max-w-xs"
+                />
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2" onClick={generateSpecificUserReport}>
+                  <FaFileDownload /> Generate Report
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left text-base">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 font-semibold">User ID</th>
+                      <th className="p-4 font-semibold">Username</th>
+                      <th className="p-4 font-semibold">Email</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Role</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Created Date</th>
+                      <th className="p-4 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users
+                      .filter((u) => !userSearchId || u.userId.toString().includes(userSearchId))
+                      .map((user) => (
+                        <tr key={user.userId} className="border-b hover:bg-gray-50 transition-all">
+                          <td className="p-4">{user.userId}</td>
+                          <td className="p-4">{user.username}</td>
+                          <td className="p-4">{user.email}</td>
+                          <td className="p-4 hidden md:table-cell">{user.role || "N/A"}</td>
+                          <td className="p-4 hidden md:table-cell">{user.createdDate || "N/A"}</td>
+                          <td className="p-4 space-x-3">
+                            <button className="text-blue-600 hover:underline" onClick={() => openUserModal(user)}><FaEdit /></button>
+                            <button className="text-red-600 hover:underline" onClick={() => handleUserDelete(user.userId)}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              {isUserModalOpen && (
+                <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+                    <h3 className="text-xl font-semibold text-blue-900 mb-4">{editUser ? "Edit User" : "Add User"}</h3>
+                    <form onSubmit={handleUserSubmit} className="space-y-4">
+                      <div><label className="block text-gray-700">Username</label><input type="text" name="username" value={userFormData.username} onChange={handleUserChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={userFormData.email} onChange={handleUserChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Password</label><input type="password" name="password" value={userFormData.password} onChange={handleUserChange} className="w-full p-2 border rounded-md" required={!editUser} /></div>
+                      <div><label className="block text-gray-700">Role</label><select name="role" value={userFormData.role} onChange={handleUserChange} className="w-full p-2 border rounded-md" required><option value="">Select Role</option><option value="PATIENT">Patient</option><option value="DOCTOR">Doctor</option><option value="ADMIN">Admin</option></select></div>
+                      <div className="flex justify-end gap-4">
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+                        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closeUserModal}>Cancel</button>
+                      </div>
+                    </form>
+                  </motion.div>
+                </motion.div>
+              )}
+            </div>
+          )}
+
+          {/* Diseases Section */}
+          {activeSection === "Diseases" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-blue-900">Diseases</h2>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openDiseaseModal()}>
+                  <FaPlus /> Add Disease
+                </button>
+              </div>
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by Disease ID"
+                  value={diseaseSearchId}
+                  onChange={(e) => setDiseaseSearchId(e.target.value)}
+                  className="p-2 border rounded-lg w-full max-w-xs"
+                />
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2" onClick={generateSpecificDiseaseReport}>
+                  <FaFileDownload /> Generate Report
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left text-base">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 font-semibold">ID</th>
+                      <th className="p-4 font-semibold">Name</th>
+                      <th className="p-4 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {diseases
+                      .filter((d) => !diseaseSearchId || d.id.toString().includes(diseaseSearchId))
+                      .map((disease) => (
+                        <tr key={disease.id} className="border-b hover:bg-gray-50 transition-all">
+                          <td className="p-4">{disease.id}</td>
+                          <td className="p-4">{disease.name}</td>
+                          <td className="p-4 space-x-3">
+                            <button className="text-blue-600 hover:underline" onClick={() => openDiseaseModal(disease)}><FaEdit /></button>
+                            <button className="text-red-600 hover:underline" onClick={() => handleDiseaseDelete(disease.id)}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              {isDiseaseModalOpen && (
+                <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+                    <h3 className="text-xl font-semibold text-blue-900 mb-4">{editDisease ? "Edit Disease" : "Add Disease"}</h3>
+                    <form onSubmit={handleDiseaseSubmit} className="space-y-4">
+                      <div><label className="block text-gray-700">Name</label><input type="text" name="name" value={diseaseFormData.name} onChange={handleDiseaseChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div className="flex justify-end gap-4">
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+                        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closeDiseaseModal}>Cancel</button>
+                      </div>
+                    </form>
+                  </motion.div>
+                </motion.div>
+              )}
+            </div>
           )}
 
           {activeSection === "Doctors" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl sm:text-2xl font-semibold text-blue-900">Doctors</h2>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onClick={() => openDoctorModal()}>Add Doctor</button>
+                <h2 className="text-2xl font-semibold text-blue-900">Doctors</h2>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openDoctorModal()}>
+                  <FaPlus /> Add Doctor
+                </button>
               </div>
-              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md overflow-x-auto">
-                <table className="w-full text-left text-sm sm:text-base">
-                  <thead className="bg-gray-100">
-                  <tr>
-                          <th className="p-4 font-semibold">ID</th>
-                          <th className="p-4 font-semibold">First Name</th>
-                          <th className="p-4 font-semibold">Last Name</th>
-                          <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
-                          <th className="p-4 font-semibold hidden md:table-cell">Email</th>
-                          <th className="p-4 font-semibold">Specialization</th>
-                          <th className="p-4 font-semibold hidden lg:table-cell">User ID</th>
-                          <th className="p-4 font-semibold hidden lg:table-cell">Experience</th>
-                          <th className="p-4 font-semibold hidden lg:table-cell">Education</th>
-                          <th className="p-4 font-semibold">Actions</th>
-                        </tr>
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by Doctor ID"
+                  value={doctorSearchId}
+                  onChange={(e) => setDoctorSearchId(e.target.value)}
+                  className="p-2 border rounded-lg w-full max-w-xs"
+                />
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2" onClick={generateSpecificDoctorReport}>
+                  <FaFileDownload /> Generate Report
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left text-base">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 font-semibold">ID</th>
+                      <th className="p-4 font-semibold">First Name</th>
+                      <th className="p-4 font-semibold">Last Name</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+                      <th className="p-4 font-semibold">Specialization</th>
+                      <th className="p-4 font-semibold">Actions</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {doctors.map((doctor) => (
-                      <tr key={doctor.id} className="border-b">
-                       <td className="p-4">{doctor.id}</td>
-                              <td className="p-4">{doctor.firstname}</td>
-                              <td className="p-4">{doctor.lastname}</td>
-                              <td className="p-4 hidden md:table-cell">{doctor.phonenumber || "N/A"}</td>
-                              <td className="p-4 hidden md:table-cell">{doctor.email || "N/A"}</td>
-                              <td className="p-4">{doctor.specilization}</td>
-                              <td className="p-4 hidden lg:table-cell">{doctor.userId || "N/A"}</td>
-                              <td className="p-4 hidden lg:table-cell">{doctor.experience || "N/A"}</td>
-                              <td className="p-4 hidden lg:table-cell">{doctor.education || "N/A"}</td>
-                              <td className="p-4 space-x-3">
-                          <button className="text-blue-500 hover:underline" onClick={() => openDoctorModal(doctor)}>Edit</button>
-                          <button className="text-red-500 hover:underline" onClick={() => handleDoctorDelete(doctor.id)}>Delete</button>
-                        </td>
-                      </tr>
-                    ))}
+                  {doctors
+            .filter((d) => {
+              if (!doctorSearchId) return true; // Show all if search is empty
+              if (d.id === undefined || d.id === null) return false; // Skip if id is undefined/null
+              return d.id.toString().includes(doctorSearchId); // Convert to string only for comparison
+            })
+            .map((doctor) => (
+              <tr key={doctor.id} className="border-b hover:bg-gray-50 transition-all">
+                <td className="p-4">{doctor.id}</td>
+                <td className="p-4">{doctor.firstname}</td>
+                <td className="p-4">{doctor.lastname}</td>
+                <td className="p-4 hidden md:table-cell">{doctor.phonenumber || "N/A"}</td>
+                <td className="p-4 hidden md:table-cell">{doctor.email || "N/A"}</td>
+                <td className="p-4">{doctor.specilization}</td>
+                <td className="p-4 space-x-3">
+                  <button className="text-blue-600 hover:underline" onClick={() => openDoctorModal(doctor)}><FaEdit /></button>
+                  <button className="text-red-600 hover:underline" onClick={() => handleDoctorDelete(doctor.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
                   </tbody>
                 </table>
               </div>
-
               {isDoctorModalOpen && (
                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
                     <h3 className="text-xl font-semibold text-blue-900 mb-4">{editDoctor ? "Edit Doctor" : "Add Doctor"}</h3>
                     <form onSubmit={handleDoctorSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-gray-700">Name</label>
-                        <input type="text" name="name" value={doctorFormData.name} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Specialty</label>
-                        <input type="text" name="specialty" value={doctorFormData.specialty} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Contact</label>
-                        <input type="email" name="contact" value={doctorFormData.contact} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" />
-                      </div>
+                      <div><label className="block text-gray-700">First Name</label><input type="text" name="firstname" value={doctorFormData.firstname} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Last Name</label><input type="text" name="lastname" value={doctorFormData.lastname} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Phone</label><input type="text" name="phonenumber" value={doctorFormData.phonenumber} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" /></div>
+                      <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={doctorFormData.email} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Specialization</label><input type="text" name="specilization" value={doctorFormData.specilization} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
                       <div className="flex justify-end gap-4">
-                        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closeDoctorModal}>Cancel</button>
                       </div>
                     </form>
@@ -826,79 +1116,64 @@ export default function AdminDashboard() {
           {activeSection === "Patients" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl sm:text-2xl font-semibold text-blue-900">Patients</h2>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onClick={() => openPatientModal()}>Add Patient</button>
+                <h2 className="text-2xl font-semibold text-blue-900">Patients</h2>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openPatientModal()}>
+                  <FaPlus /> Add Patient
+                </button>
               </div>
-              <div className="bg-white p-4 sm:p-` rounded-lg shadow-md overflow-x-auto">
-                <table className="w-full text-left text-sm sm:text-base">
-                  <thead className="bg-gray-100">
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by Patient ID"
+                  value={patientSearchId}
+                  onChange={(e) => setPatientSearchId(e.target.value)}
+                  className="p-2 border rounded-lg w-full max-w-xs"
+                />
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2" onClick={generateSpecificPatientReport}>
+                  <FaFileDownload /> Generate Report
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left text-base">
+                  <thead className="bg-gray-50">
                     <tr>
-                    <th className="p-4 font-semibold">Patient Id</th>
-                          <th className="p-4 font-semibold">First Name</th>
-                          <th className="p-4 font-semibold">Last Name</th>
-                          <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
-                          <th className="p-4 font-semibold hidden md:table-cell">Email</th>
-                          <th className="p-4 font-semibold">Date Of Birth</th>
-                          <th className="p-4 font-semibold ">address</th>
-                          <th className="p-4 font-semibold hidden lg:table-cell">Gender</th>
-                          <th className="p-4 font-semibold hidden lg:table-cell">Created Date </th>
-                          <th className="p-4 font-semibold">Last modified Date</th>
+                      <th className="p-4 font-semibold">Patient ID</th>
+                      <th className="p-4 font-semibold">First Name</th>
+                      <th className="p-4 font-semibold">Last Name</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+                      <th className="p-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {patients.map((patient) => (
-                      <tr key={patient.id} className="border-b">
-                        <td className="p-2 sm:p-3">{patient.patientId}</td>
-                        <td className="p-2 sm:p-3">{patient.firstname}</td>
-                        <td className="p-2 sm:p-3">{patient.lastname}</td>
-                        <td className="p-2 sm:p-3 hidden md:table-cell">{patient.phone}</td>
-                        <td className="p-2 sm:p-3">{patient.email}</td>
-                        <td className="p-2 sm:p-3">{patient.dateOfBirth}</td>
-                        <td className="p-2 sm:p-3">{patient.address}</td>
-                        <td className="p-2 sm:p-3">{patient.gender}</td>
-                        <td className="p-2 sm:p-3">{patient.address}</td>
-                        <td className="p-2 sm:p-3">{patient.gender}</td>
-                        <td className="p-2 sm:p-3 space-x-2">
-                          <button className="text-blue-500 hover:underline" onClick={() => openPatientModal(patient)}>Edit</button>
-                          <button className="text-red-500 hover:underline" onClick={() => handlePatientDelete(patient.id)}>Delete</button>
+                    {patients.filter((p) => !patientSearchId || p.patientId.includes(patientSearchId)).map((patient) => (
+                      <tr key={patient.patientId} className="border-b hover:bg-gray-50 transition-all">
+                        <td className="p-4">{patient.patientId}</td>
+                        <td className="p-4">{patient.firstname}</td>
+                        <td className="p-4">{patient.lastname}</td>
+                        <td className="p-4 hidden md:table-cell">{patient.phone}</td>
+                        <td className="p-4 hidden md:table-cell">{patient.email}</td>
+                        <td className="p-4 space-x-3">
+                          <button className="text-blue-600 hover:underline" onClick={() => openPatientModal(patient)}><FaEdit /></button>
+                          <button className="text-red-600 hover:underline" onClick={() => handlePatientDelete(patient.patientId)}>Delete</button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-
               {isPatientModalOpen && (
                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
                     <h3 className="text-xl font-semibold text-blue-900 mb-4">{editPatient ? "Edit Patient" : "Add Patient"}</h3>
                     <form onSubmit={handlePatientSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-gray-700">Firstname</label>
-                        <input type="text" name="firstname" value={patientFormData.firstname} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Lastname</label>
-                        <input type="text" name="lastname" value={patientFormData.lastname} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">email</label>
-                        <input type="email" name="email" value={patientFormData.email} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">phone</label>
-                        <input type="text" name="phone" value={patientFormData.phone} onChange={handlePatientChange} className="w-full p-2 border rounded-md" />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Date of Birth</label>
-                        <input type="d" name="name" value={patientFormData.dateOfBirth} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Address</label>
-                        <input type="text" name="address" value={patientFormData.address} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required />
-                      </div>
+                      <div><label className="block text-gray-700">First Name</label><input type="text" name="firstname" value={patientFormData.firstname} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Last Name</label><input type="text" name="lastname" value={patientFormData.lastname} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={patientFormData.email} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Phone</label><input type="text" name="phone" value={patientFormData.phone} onChange={handlePatientChange} className="w-full p-2 border rounded-md" /></div>
+                      <div><label className="block text-gray-700">Date of Birth</label><input type="date" name="dateOfBirth" value={patientFormData.dateOfBirth} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
                       <div className="flex justify-end gap-4">
-                        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closePatientModal}>Cancel</button>
                       </div>
                     </form>
@@ -911,33 +1186,49 @@ export default function AdminDashboard() {
           {activeSection === "Appointments" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl sm:text-2xl font-semibold text-blue-900">Appointments</h2>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onClick={() => openAppointmentModal()}>Add Appointment</button>
+                <h2 className="text-2xl font-semibold text-blue-900">Appointments</h2>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openAppointmentModal()}>
+                  <FaPlus /> Add Appointment
+                </button>
               </div>
-              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md overflow-x-auto">
-                <table className="w-full text-left text-sm sm:text-base">
-                  <thead className="bg-gray-100">
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by Appointment ID"
+                  value={appointmentSearchId}
+                  onChange={(e) => setAppointmentSearchId(e.target.value)}
+                  className="p-2 border rounded-lg w-full max-w-xs"
+                />
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2" onClick={generateSpecificAppointmentReport}>
+                  <FaFileDownload /> Generate Report
+                </button>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <table className="w-full text-left text-base">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="p-2 sm:p-3">Patient</th>
-                      <th className="p-2 sm:p-3">Doctor</th>
-                      <th className="p-2 sm:p-3 hidden md:table-cell">Date</th>
-                      <th className="p-2 sm:p-3">Status</th>
-                      <th className="p-2 sm:p-3">Actions</th>
+                      <th className="p-4 font-semibold">ID</th>
+                      <th className="p-4 font-semibold">Patient</th>
+                      <th className="p-4 font-semibold">Doctor</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Date</th>
+                      <th className="p-4 font-semibold">Status</th>
+                      <th className="p-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {appointments.map((appointment) => {
-                      const patient = patients.find((p) => p.id === appointment.patientId);
+                    {appointments.filter((a) => !appointmentSearchId || a.id.includes(appointmentSearchId)).map((appointment) => {
+                      const patient = patients.find((p) => p.patientId === appointment.patientId);
                       const doctor = doctors.find((d) => d.id === appointment.doctorId);
                       return (
-                        <tr key={appointment.id} className="border-b">
-                          <td className="p-2 sm:p-3">{patient ? patient.name : "Unknown"}</td>
-                          <td className="p-2 sm:p-3">{doctor ? doctor.name : "Unknown"}</td>
-                          <td className="p-2 sm:p-3 hidden md:table-cell">{appointment.date}</td>
-                          <td className="p-2 sm:p-3">{appointment.status}</td>
-                          <td className="p-2 sm:p-3 space-x-2">
-                            <button className="text-blue-500 hover:underline" onClick={() => openAppointmentModal(appointment)}>Edit</button>
-                            <button className="text-red-500 hover:underline" onClick={() => handleAppointmentDelete(appointment.id)}>Delete</button>
+                        <tr key={appointment.id} className="border-b hover:bg-gray-50 transition-all">
+                          <td className="p-4">{appointment.id}</td>
+                          <td className="p-4">{patient ? `${patient.firstname} ${patient.lastname}` : "Unknown"}</td>
+                          <td className="p-4">{doctor ? `${doctor.firstname} ${doctor.lastname}` : "Unknown"}</td>
+                          <td className="p-4 hidden md:table-cell">{appointment.date}</td>
+                          <td className="p-4">{appointment.status}</td>
+                          <td className="p-4 space-x-3">
+                            <button className="text-blue-600 hover:underline" onClick={() => openAppointmentModal(appointment)}><FaEdit /></button>
+                            <button className="text-red-600 hover:underline" onClick={() => handleAppointmentDelete(appointment.id)}>Delete</button>
                           </td>
                         </tr>
                       );
@@ -945,44 +1236,17 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-
               {isAppointmentModalOpen && (
                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
                     <h3 className="text-xl font-semibold text-blue-900 mb-4">{editAppointment ? "Edit Appointment" : "Add Appointment"}</h3>
                     <form onSubmit={handleAppointmentSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-gray-700">Patient</label>
-                        <select name="patientId" value={appointmentFormData.patientId} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md" required>
-                          <option value="">Select Patient</option>
-                          {patients.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Doctor</label>
-                        <select name="doctorId" value={appointmentFormData.doctorId} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md" required>
-                          <option value="">Select Doctor</option>
-                          {doctors.map((d) => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Date</label>
-                        <input type="datetime-local" name="date" value={appointmentFormData.date} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md" required />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700">Status</label>
-                        <select name="status" value={appointmentFormData.status} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md">
-                          <option value="Pending">Pending</option>
-                          <option value="Confirmed">Confirmed</option>
-                          <option value="Canceled">Canceled</option>
-                        </select>
-                      </div>
+                      <div><label className="block text-gray-700">Patient</label><select name="patientId" value={appointmentFormData.patientId} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md" required><option value="">Select Patient</option>{patients.map((p) => (<option key={p.patientId} value={p.patientId}>{`${p.firstname} ${p.lastname}`}</option>))}</select></div>
+                      <div><label className="block text-gray-700">Doctor</label><select name="doctorId" value={appointmentFormData.doctorId} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md" required><option value="">Select Doctor</option>{doctors.map((d) => (<option key={d.id} value={d.id}>{`${d.firstname} ${d.lastname}`}</option>))}</select></div>
+                      <div><label className="block text-gray-700">Date</label><input type="datetime-local" name="date" value={appointmentFormData.date} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Status</label><select name="status" value={appointmentFormData.status} onChange={handleAppointmentChange} className="w-full p-2 border rounded-md"><option value="Pending">Pending</option><option value="Confirmed">Confirmed</option><option value="Canceled">Canceled</option></select></div>
                       <div className="flex justify-end gap-4">
-                        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closeAppointmentModal}>Cancel</button>
                       </div>
                     </form>
@@ -992,12 +1256,180 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {activeSection === "Logout" && (
-            <div className="text-center">
-              <p className="text-xl text-gray-700">Logging out...</p>
-              {/* Add logout logic here, e.g., clear localStorage and redirect */}
+{activeSection === "Medical Records" && (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center">
+      <h2 className="text-2xl font-semibold text-blue-900">Medical Records</h2>
+      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openMedicalRecordModal()}>
+        <FaPlus /> Add Record
+      </button>
+    </div>
+    <div className="flex items-center gap-4 mb-4">
+      <input
+        type="text"
+        placeholder="Search by Record ID"
+        value={medicalRecordSearchId}
+        onChange={(e) => setMedicalRecordSearchId(e.target.value)}
+        className="p-2 border rounded-lg w-full max-w-xs"
+      />
+      <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2" onClick={generateSpecificMedicalRecordReport}>
+        <FaFileDownload /> Generate Report
+      </button>
+    </div>
+    <div className="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+      <table className="w-full text-left text-base">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="p-4 font-semibold">ID</th>
+            <th className="p-4 font-semibold">Patient</th>
+            <th className="p-4 font-semibold">Doctor</th>
+            <th className="p-4 font-semibold hidden md:table-cell">Diagnostic Data</th>
+            <th className="p-4 font-semibold hidden md:table-cell">Treatments</th>
+            <th className="p-4 font-semibold hidden md:table-cell">Disease Name</th>
+            <th className="p-4 font-semibold hidden md:table-cell">Report</th>
+            <th className="p-4 font-semibold hidden md:table-cell">Created Date</th>
+            <th className="p-4 font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {medicalRecords
+            .filter((r) => {
+              if (!medicalRecordSearchId) return true;
+              if (r.recordid === undefined || r.recordid === null) return false;
+              return r.recordid.toString().includes(medicalRecordSearchId);
+            })
+            .map((record) => {
+              const patient = patients.find((p) => p.patientId === record.patientId);
+              const doctor = doctors.find((d) => d.id === record.doctorId);
+              return (
+                <tr key={record.recordid} className="border-b hover:bg-gray-50 transition-all">
+                  <td className="p-4">{record.recordid}</td>
+                  <td className="p-4">{patient ? `${patient.firstname} ${patient.lastname}` : record.patientId}</td>
+                  <td className="p-4">{doctor ? `${doctor.firstname} ${doctor.lastname}` : record.doctorId}</td>
+                  <td className="p-4 hidden md:table-cell">{record.diagnosticdata || "N/A"}</td>
+                  <td className="p-4 hidden md:table-cell">{record.treatments || "N/A"}</td>
+                  <td className="p-4 hidden md:table-cell">{record.diseasename || "N/A"}</td>
+                  <td className="p-4 hidden md:table-cell">
+                    {record.reporturl ? (
+                      <div className="flex space-x-2">
+                        <a
+                          href={record.reporturl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                          <FaEye /> View
+                        </a>
+                        <button
+                          onClick={() => downloadReportUrl(record.reporturl, record.recordid)}
+                          className="text-green-600 hover:underline flex items-center gap-1"
+                        >
+                          <FaFileDownload /> Download
+                        </button>
+                      </div>
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
+                  <td className="p-4 hidden md:table-cell">{record.createdAt || "N/A"}</td>
+                  <td className="p-4 space-x-3">
+                    <button className="text-blue-600 hover:underline" onClick={() => openMedicalRecordModal(record)}>
+                      <FaEdit />
+                    </button>
+                    <button className="text-red-600 hover:underline" onClick={() => handleMedicalRecordDelete(record.recordid)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+        </tbody>
+      </table>
+    </div>
+    {isMedicalRecordModalOpen && (
+      <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+          <h3 className="text-xl font-semibold text-blue-900 mb-4">{editMedicalRecord ? "Edit Medical Record" : "Add Medical Record"}</h3>
+          <form onSubmit={handleMedicalRecordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-gray-700">Patient</label>
+              <select name="patientId" value={medicalRecordFormData.patientId} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" required>
+                <option value="">Select Patient</option>
+                {patients.map((p) => (
+                  <option key={p.patientId} value={p.patientId}>{`${p.firstname} ${p.lastname}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700">Doctor</label>
+              <select name="doctorId" value={medicalRecordFormData.doctorId} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" required>
+                <option value="">Select Doctor</option>
+                {doctors.map((d) => (
+                  <option key={d.id} value={d.id}>{`${d.firstname} ${d.lastname}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700">Disease Name</label>
+              <input type="text" name="diseasename" value={medicalRecordFormData.diseasename} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" required />
+            </div>
+            <div>
+              <label className="block text-gray-700">Diagnostic Data</label>
+              <input type="text" name="diagnosticdata" value={medicalRecordFormData.diagnosticdata} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" />
+            </div>
+            <div>
+              <label className="block text-gray-700">Treatments</label>
+              <textarea name="treatments" value={medicalRecordFormData.treatments} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" rows="3" />
+            </div>
+            <div>
+              <label className="block text-gray-700">Report URL</label>
+              <input type="text" name="reporturl" value={medicalRecordFormData.reporturl} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" />
+            </div>
+            <div>
+              <label className="block text-gray-700">Created Date</label>
+              <input type="datetime-local" name="createdAt" value={medicalRecordFormData.createdAt} onChange={handleMedicalRecordChange} className="w-full p-2 border rounded-md" required />
+            </div>
+            <div className="flex justify-end gap-4">
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+              <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closeMedicalRecordModal}>Cancel</button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    )}
+  </div>
+)}
+
+          {activeSection === "Reports" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-blue-900">Reports</h2>
+              <div className="bg-white p-6 rounded-xl shadow-md">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Generate All Reports</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 justify-center" onClick={generateAllUsersReport}>
+                    <FaFileDownload /> All Users
+                  </button>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 justify-center" onClick={generateAllDoctorsReport}>
+                    <FaFileDownload /> All Doctors
+                  </button>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 justify-center" onClick={generateAllPatientsReport}>
+                    <FaFileDownload /> All Patients
+                  </button>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 justify-center" onClick={generateAllAppointmentsReport}>
+                    <FaFileDownload /> All Appointments
+                  </button>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 justify-center" onClick={generateAllMedicalRecordsReport}>
+                    <FaFileDownload /> All Medical Records
+                  </button>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center gap-2 justify-center" onClick={generateAllDiseasesReport}>
+                    <FaFileDownload /> All Diseases
+                  </button>
+                </div>
+              </div>
             </div>
           )}
+
+          {activeSection === "Logout" && <div className="text-center"><p className="text-xl text-gray-700" onClick={handleLogout}>Logging out...</p></div>}
         </motion.div>
       </motion.div>
     </div>

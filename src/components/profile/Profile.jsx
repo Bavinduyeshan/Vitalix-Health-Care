@@ -1226,9 +1226,19 @@ export default function Profile() {
                   <p><strong>Treatment:</strong> {selectedRecord.treatments || "N/A"}</p>
                   <p><strong>Date:</strong> {new Date(selectedRecord.createdAt).toLocaleDateString()}</p>
                   <p><strong>Doctor:</strong> {selectedRecord.doctorName || "N/A"}</p>
-                  <p><strong>Report:</strong> {selectedRecord.reportUrl ? (
-                    <a href={selectedRecord.reportUrl} target="_blank" rel="noopener noreferrer" className="text-teal-500 hover:underline">View Report</a>
-                  ) : "N/A"}</p>
+                  <p><strong>Report:</strong>{" "}
+              {selectedRecord.reportUrl ? (
+                <a
+                  href={`http://localhost:8081${selectedRecord.reportUrl}`} // Full URL
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-500 hover:underline"
+                >
+                  View Report
+                </a>
+              ) : (
+                "N/A"
+              )}</p>
                 </div>
                 <motion.button
                   onClick={handleCloseRecord}
