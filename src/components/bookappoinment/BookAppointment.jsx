@@ -132,8 +132,8 @@ export default function BookAppointment() {
       const appointmentData = {
         patientID: formData.patientId,
         docname: formData.doctor,
-        appointment_Date: formData.date,
-        appointment_Time: formData.time,
+        appoinment_Date: formData.date,  // Corrected to match backend
+        appoinment_Time: `${formData.time}:00`,  // Add seconds to match HH:mm:ss
         reason: formData.reason,
       };
 

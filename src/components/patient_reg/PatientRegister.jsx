@@ -33,7 +33,7 @@ export default function PatientRegister() {
       lastname: form.lastname,
       email: form.email,
       phone: form.phone,
-      date_of_birth: form.date_of_birth,
+      dateOfBirth: form.date_of_birth,
       address: form.address,
       gender: form.gender,
       userId: userId,

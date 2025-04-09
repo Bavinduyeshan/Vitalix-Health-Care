@@ -508,7 +508,7 @@ export default function AdminDashboard() {
 
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState(null);
-  const initialAppointmentState = { AppoinmentID: "", patientId: "", doctorId: "",diseasename:"", diagnosticdata: "", treatments: "" ,reporturl:"",createdAt:""};
+  const initialAppointmentState = { AppoinmentID: "", patientId: "", doctorId: "",appoinment_Date:"", appoinment_Time: "", reason: "" };
   const [appointmentFormData, setAppointmentFormData] = useState(initialAppointmentState);
 
   const [isMedicalRecordModalOpen, setIsMedicalRecordModalOpen] = useState(false);
@@ -560,7 +560,12 @@ export default function AdminDashboard() {
 
     fetch("http://localhost:8086/appoinments/getAll", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
-      .then((data) => setAppointments(data))
+      .then((data) => {
+        const mappedAppointments = data.map((appointment) => ({
+          AppoinmentID: appointment.appoinmentId ||"", patientId: appointment.patientID ||"", doctorId:appointment.docname || "",appoinment_Date:appointment.appoinment_Date ||"", appoinment_Time:appointment.appoinment_Time || "", reason:appointment.reason || "" 
+      }));
+      setAppointments(mappedAppointments);
+    })
       .catch((error) => console.error("Error fetching appointments:", error));
 
       fetch("http://localhost:8081/medical-records/getAll", { headers: { Authorization: `Bearer ${token}` } })
@@ -858,12 +863,12 @@ export default function AdminDashboard() {
         </motion.div>
 
         {/* Menu Bar */}
-        <motion.div className="bg-white rounded-xl shadow-lg p-3 flex flex-wrap justify-center sm:justify-start gap-3 mb-8" variants={itemVariants}>
+        <motion.div className="bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl shadow-lg p-3 flex flex-wrap justify-center sm:justify-start gap-3 mb-8" variants={itemVariants}>
           {["Dashboard","Users", "Doctors", "Patients", "Appointments", "Medical Records","Diseases", "Reports", "Logout"].map((section) => (
             <button
               key={section}
-              className={`text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-all duration-300 ${
-                activeSection === section ? "bg-blue-100 text-blue-800" : ""
+              className={`text-white hover:bg-blue-50 px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-all duration-300 ${
+                activeSection === section ? "bg-blue-100 text-black" : ""
               }`}
               onClick={() => setActiveSection(section)}
             >
@@ -1138,10 +1143,16 @@ export default function AdminDashboard() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="p-4 font-semibold">Patient ID</th>
+                      <th className="p-4 font-semibold">User ID</th>
                       <th className="p-4 font-semibold">First Name</th>
                       <th className="p-4 font-semibold">Last Name</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Address</th>
                       <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
                       <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Date of Birth</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Gender</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">created Date </th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Last Modified Date </th>
                       <th className="p-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -1149,10 +1160,16 @@ export default function AdminDashboard() {
                     {patients.filter((p) => !patientSearchId || p.patientId.includes(patientSearchId)).map((patient) => (
                       <tr key={patient.patientId} className="border-b hover:bg-gray-50 transition-all">
                         <td className="p-4">{patient.patientId}</td>
+                        <td className="p-4">{patient.userId}</td>
                         <td className="p-4">{patient.firstname}</td>
                         <td className="p-4">{patient.lastname}</td>
+                        <td className="p-4">{patient.address}</td>
                         <td className="p-4 hidden md:table-cell">{patient.phone}</td>
                         <td className="p-4 hidden md:table-cell">{patient.email}</td>
+                        <td className="p-4">{patient.dateOfBirth}</td>
+                        <td className="p-4">{patient.gender}</td>
+                        <td className="p-4">{patient.createdDate}</td>
+                        <td className="p-4">{patient.lastModifiedDate}</td>
                         <td className="p-4 space-x-3">
                           <button className="text-blue-600 hover:underline" onClick={() => openPatientModal(patient)}><FaEdit /></button>
                           <button className="text-red-600 hover:underline" onClick={() => handlePatientDelete(patient.patientId)}>Delete</button>
@@ -1208,24 +1225,26 @@ export default function AdminDashboard() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="p-4 font-semibold">ID</th>
-                      <th className="p-4 font-semibold">Patient</th>
-                      <th className="p-4 font-semibold">Doctor</th>
-                      <th className="p-4 font-semibold hidden md:table-cell">Date</th>
-                      <th className="p-4 font-semibold">Status</th>
-                      <th className="p-4 font-semibold">Actions</th>
+                      <th className="p-4 font-semibold">PatientID</th>
+                      <th className="p-4 font-semibold">Doctor Name</th>
+                      <th className="p-4 font-semibold hidden md:table-cell">Appoinment Date</th>
+                      <th className="p-4 font-semibold">Appoinment Time</th>
+                      <th className="p-4 font-semibold">Reason</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody>          
+
                     {appointments.filter((a) => !appointmentSearchId || a.id.includes(appointmentSearchId)).map((appointment) => {
                       const patient = patients.find((p) => p.patientId === appointment.patientId);
                       const doctor = doctors.find((d) => d.id === appointment.doctorId);
                       return (
                         <tr key={appointment.id} className="border-b hover:bg-gray-50 transition-all">
-                          <td className="p-4">{appointment.id}</td>
-                          <td className="p-4">{patient ? `${patient.firstname} ${patient.lastname}` : "Unknown"}</td>
-                          <td className="p-4">{doctor ? `${doctor.firstname} ${doctor.lastname}` : "Unknown"}</td>
-                          <td className="p-4 hidden md:table-cell">{appointment.date}</td>
-                          <td className="p-4">{appointment.status}</td>
+                          <td className="p-4">{appointment.AppoinmentID}</td>
+                          <td className="p-4">{appointment.patientId }</td>
+                          <td className="p-4">{appointment.doctorId}</td>
+                          <td className="p-4 hidden md:table-cell">{appointment.appoinment_Date}</td>
+                          <td className="p-4">{appointment.appoinment_Time}</td>
+                          <td className="p-4">{appointment.reason}</td>
                           <td className="p-4 space-x-3">
                             <button className="text-blue-600 hover:underline" onClick={() => openAppointmentModal(appointment)}><FaEdit /></button>
                             <button className="text-red-600 hover:underline" onClick={() => handleAppointmentDelete(appointment.id)}>Delete</button>
@@ -1435,3 +1454,445 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
+// import React, { useState, useEffect } from "react";
+// import { motion } from "framer-motion";
+// import { FaUsers, FaUserMd, FaCalendarCheck, FaFileDownload, FaPlus, FaEdit, FaEye } from "react-icons/fa";
+// import { Bar, Pie } from "react-chartjs-2";
+// import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from "chart.js";
+// import profileimg from "../../assets/profileimg.jpg";
+// import { useNavigate } from "react-router-dom";
+
+// // Register Chart.js components
+// ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+
+// export default function AdminDashboard() {
+//   const navigate = useNavigate();
+//   const [activeSection, setActiveSection] = useState("Dashboard");
+//   const adminUsername = "Bavindu";
+
+//   // Data states
+//   const [doctors, setDoctors] = useState([]);
+//   const [patients, setPatients] = useState([]);
+//   const [appointments, setAppointments] = useState([]);
+//   const [medicalRecords, setMedicalRecords] = useState([]);
+
+//   // Search states
+//   const [doctorSearchId, setDoctorSearchId] = useState("");
+//   const [patientSearchId, setPatientSearchId] = useState("");
+//   const [appointmentSearchId, setAppointmentSearchId] = useState("");
+//   const [medicalRecordSearchId, setMedicalRecordSearchId] = useState("");
+
+//   // Modal states
+//   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
+//   const [editDoctor, setEditDoctor] = useState(null);
+//   const [doctorFormData, setDoctorFormData] = useState({ id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" });
+
+//   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+//   const [editPatient, setEditPatient] = useState(null);
+//   const [patientFormData, setPatientFormData] = useState({ patientId: "", userId: "", firstname: "", lastname: "", email: "", phone: "", dateOfBirth: "", address: "", gender: "", createdDate: "", lastModifiedDate: "" });
+
+//   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+//   const [editAppointment, setEditAppointment] = useState(null);
+//   const [appointmentFormData, setAppointmentFormData] = useState({ AppoinmentID: "", patientId: "", doctorId: "", appoinment_Date: "", appoinment_Time: "", reason: "" });
+
+//   const [isMedicalRecordModalOpen, setIsMedicalRecordModalOpen] = useState(false);
+//   const [editMedicalRecord, setEditMedicalRecord] = useState(null);
+//   const [medicalRecordFormData, setMedicalRecordFormData] = useState({ recordid: "", patientId: "", doctorId: "", diseasename: "", diagnosticdata: "", treatments: "", reporturl: "", createdAt: "" });
+
+//   // Animation variants
+//   const containerVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.3 } } };
+//   const itemVariants = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+
+//   // Fetch data on mount
+//   useEffect(() => {
+//     const token = localStorage.getItem("token");
+//     const fetchData = async (url, setState, mapFn) => {
+//       try {
+//         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+//         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+//         const data = await res.json();
+//         setState(data.map(mapFn));
+//       } catch (error) {
+//         console.error(`Error fetching data from ${url}:`, error);
+//       }
+//     };
+
+//     fetchData("http://localhost:8082/doctors/getAll", setDoctors, (d) => ({
+//       id: d.doctor_Id || "", firstname: d.firstname || "", lastname: d.lastname || "", phonenumber: d.phonenumber || "",
+//       email: d.email || "", specilization: d.specilization || d.specialization || "", userId: d.userId || "",
+//       experience: d.experience || "", education: d.education || "",
+//     }));
+
+//     fetchData("http://localhost:8083/pateints/patients/getAll", setPatients, (p) => ({
+//       patientId: p.patientId || "", userId: p.userId || "", firstname: p.firstname || "", lastname: p.lastname || "",
+//       email: p.email || "", phone: p.phone || "", dateOfBirth: p.dateOfBirth || "", address: p.address || "",
+//       gender: p.gender || "", createdDate: p.createdDate || "", lastModifiedDate: p.lastModifiedDate || "",
+//     }));
+
+//     fetchData("http://localhost:8086/appoinments/getAll", setAppointments, (a) => ({
+//       AppoinmentID: a.appoinmentId || "", patientId: a.patientID || "", doctorId: a.docname || "",
+//       appoinment_Date: a.appoinment_Date || "", appoinment_Time: a.appoinment_Time || "", reason: a.reason || "",
+//     }));
+
+//     fetchData("http://localhost:8081/medical-records/getAll", setMedicalRecords, (r) => ({
+//       recordid: r.id || "", patientId: r.patientID || "", doctorId: r.doctor_Id || "", diseasename: r.disease?.name || "",
+//       diagnosticdata: r.diagnosticData || "", treatments: r.treatments || "", reporturl: r.reportUrl || "", createdAt: r.createdAt || "",
+//     }));
+//   }, []);
+
+//   // Chart data
+//   const userChartData = {
+//     labels: ["Patients", "Doctors", "Appointments"],
+//     datasets: [{ label: "Count", data: [patients.length, doctors.length, appointments.length], backgroundColor: ["#3B82F6", "#10B981", "#F59E0B"], borderColor: ["#2563EB", "#059669", "#D97706"], borderWidth: 1 }],
+//   };
+
+//   const specializationChartData = {
+//     labels: [...new Set(doctors.map((d) => d.specilization || "Unknown"))],
+//     datasets: [{
+//       data: [...new Set(doctors.map((d) => d.specilization || "Unknown"))].map((spec) => doctors.filter((d) => (d.specilization || "Unknown") === spec).length),
+//       backgroundColor: ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"],
+//     }],
+//   };
+
+//   const chartOptions = { responsive: true, plugins: { legend: { position: "top" }, title: { display: true } } };
+
+//   // Handlers
+//   const handleLogout = () => {
+//     localStorage.removeItem("token");
+//     localStorage.removeItem("userRole");
+//     navigate("/");
+//   };
+
+//   const downloadReportUrl = (url, recordId) => {
+//     fetch(url)
+//       .then((res) => res.ok ? res.blob() : Promise.reject("Failed to download"))
+//       .then((blob) => {
+//         const link = document.createElement("a");
+//         link.href = URL.createObjectURL(blob);
+//         link.download = `Medical_Record_${recordId}_Report_${new Date().toISOString().split("T")[0]}.pdf`;
+//         link.click();
+//         URL.revokeObjectURL(link.href);
+//       })
+//       .catch((error) => alert(error));
+//   };
+
+//   const openModal = (setModalOpen, setEdit, setFormData, initialState, item = null) => {
+//     setEdit(item);
+//     setFormData(item || initialState);
+//     setModalOpen(true);
+//   };
+
+//   const closeModal = (setModalOpen, setEdit, setFormData, initialState) => {
+//     setModalOpen(false);
+//     setEdit(null);
+//     setFormData(initialState);
+//   };
+
+//   const handleDoctorSubmit = (e) => { e.preventDefault(); closeModal(setIsDoctorModalOpen, setEditDoctor, setDoctorFormData, { id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" }); };
+//   const handlePatientSubmit = (e) => { e.preventDefault(); closeModal(setIsPatientModalOpen, setEditPatient, setPatientFormData, { patientId: "", userId: "", firstname: "", lastname: "", email: "", phone: "", dateOfBirth: "", address: "", gender: "", createdDate: "", lastModifiedDate: "" }); };
+//   const handleAppointmentSubmit = (e) => { e.preventDefault(); closeModal(setIsAppointmentModalOpen, setEditAppointment, setAppointmentFormData, { AppoinmentID: "", patientId: "", doctorId: "", appoinment_Date: "", appoinment_Time: "", reason: "" }); };
+//   const handleMedicalRecordSubmit = (e) => { e.preventDefault(); closeModal(setIsMedicalRecordModalOpen, setEditMedicalRecord, setMedicalRecordFormData, { recordid: "", patientId: "", doctorId: "", diseasename: "", diagnosticdata: "", treatments: "", reporturl: "", createdAt: "" }); };
+
+//   return (
+//     <div className="min-h-screen bg-gray-100 font-sans">
+//       <motion.div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8 bg-gray-100">
+//         {/* Header */}
+//         <motion.div variants={itemVariants} className="flex items-center space-x-4 mb-8">
+//           <img src={profileimg} alt="Profile" className="w-20 h-20 object-cover rounded-full border-2 border-blue-500" />
+//           <h1 className="text-3xl sm:text-4xl md:text-5xl text-gray-800 font-extrabold tracking-tight">Hello, {adminUsername}</h1>
+//         </motion.div>
+
+//         {/* Menu Bar */}
+//         <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl shadow-lg p-3 flex flex-wrap justify-center sm:justify-start gap-3 mb-8">
+//           {["Dashboard", "Doctors", "Patients", "Appointments", "Medical Records", "Logout"].map((section) => (
+//             <button
+//               key={section}
+//               className={`text-white px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-all duration-300 ${activeSection === section ? "bg-white text-blue-600" : "hover:bg-white/20"}`}
+//               onClick={() => setActiveSection(section)}
+//             >
+//               {section}
+//             </button>
+//           ))}
+//         </motion.div>
+
+//         {/* Content */}
+//         <motion.div key={activeSection} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+//           {activeSection === "Dashboard" && (
+//             <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" variants={containerVariants}>
+//               <motion.div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200" variants={itemVariants}>
+//                 <h3 className="text-lg font-semibold text-gray-800 mb-4">User Statistics</h3>
+//                 <Bar data={userChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { text: "User Statistics" } } }} />
+//               </motion.div>
+//               <motion.div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200" variants={itemVariants}>
+//                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Doctor Specializations</h3>
+//                 <Pie data={specializationChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { text: "Doctor Specializations" } } }} />
+//               </motion.div>
+//             </motion.div>
+//           )}
+
+//           {activeSection === "Doctors" && (
+//             <div className="space-y-6">
+//               <div className="flex justify-between items-center">
+//                 <h2 className="text-2xl font-semibold text-gray-800">Doctors</h2>
+//                 <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2" onClick={() => openModal(setIsDoctorModalOpen, setEditDoctor, setDoctorFormData, { id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" })}>
+//                   <FaPlus /> Add Doctor
+//                 </button>
+//               </div>
+//               <div className="flex items-center gap-4 mb-4">
+//                 <input type="text" placeholder="Search by Doctor ID" value={doctorSearchId} onChange={(e) => setDoctorSearchId(e.target.value)} className="p-2 border rounded-lg w-full max-w-xs text-gray-600" />
+//                 <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-all flex items-center gap-2"><FaFileDownload /> Generate Report</button>
+//               </div>
+//               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+//                 <table className="w-full text-left text-base">
+//                   <thead className="bg-gray-100 text-gray-700">
+//                     <tr>
+//                       <th className="p-4 font-semibold">ID</th>
+//                       <th className="p-4 font-semibold">First Name</th>
+//                       <th className="p-4 font-semibold">Last Name</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+//                       <th className="p-4 font-semibold">Specialization</th>
+//                       <th className="p-4 font-semibold">Actions</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {doctors.filter((d) => !doctorSearchId || d.id?.toString().includes(doctorSearchId)).map((doctor, index) => (
+//                       <tr key={doctor.id} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-all`}>
+//                         <td className="p-4 text-gray-600">{doctor.id}</td>
+//                         <td className="p-4 text-gray-600">{doctor.firstname}</td>
+//                         <td className="p-4 text-gray-600">{doctor.lastname}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{doctor.phonenumber || "N/A"}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{doctor.email || "N/A"}</td>
+//                         <td className="p-4 text-gray-600">{doctor.specilization}</td>
+//                         <td className="p-4 space-x-3">
+//                           <button className="text-blue-500 hover:underline" onClick={() => openModal(setIsDoctorModalOpen, setEditDoctor, setDoctorFormData, { id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" }, doctor)}><FaEdit /></button>
+//                           <button className="text-red-500 hover:underline">Delete</button>
+//                         </td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//               {isDoctorModalOpen && (
+//                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+//                   <motion.div className="bg-white rounded-lg shadow-xl w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+//                     <div className="bg-gradient-to-r from-blue-500 to-emerald-500 p-4 rounded-t-lg">
+//                       <h3 className="text-xl font-semibold text-white">{editDoctor ? "Edit Doctor" : "Add Doctor"}</h3>
+//                     </div>
+//                     <form onSubmit={handleDoctorSubmit} className="p-6 space-y-4">
+//                       <div><label className="block text-gray-700">First Name</label><input type="text" name="firstname" value={doctorFormData.firstname} onChange={(e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Last Name</label><input type="text" name="lastname" value={doctorFormData.lastname} onChange={(e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Phone</label><input type="text" name="phonenumber" value={doctorFormData.phonenumber} onChange={(e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" /></div>
+//                       <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={doctorFormData.email} onChange={(e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Specialization</label><input type="text" name="specilization" value={doctorFormData.specilization} onChange={(e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div className="flex justify-end gap-4">
+//                         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+//                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={() => closeModal(setIsDoctorModalOpen, setEditDoctor, setDoctorFormData, { id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" })}>Cancel</button>
+//                       </div>
+//                     </form>
+//                   </motion.div>
+//                 </motion.div>
+//               )}
+//             </div>
+//           )}
+
+//           {activeSection === "Patients" && (
+//             <div className="space-y-6">
+//               <div className="flex justify-between items-center">
+//                 <h2 className="text-2xl font-semibold text-gray-800">Patients</h2>
+//                 <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2" onClick={() => openModal(setIsPatientModalOpen, setEditPatient, setPatientFormData, { patientId: "", userId: "", firstname: "", lastname: "", email: "", phone: "", dateOfBirth: "", address: "", gender: "", createdDate: "", lastModifiedDate: "" })}>
+//                   <FaPlus /> Add Patient
+//                 </button>
+//               </div>
+//               <div className="flex items-center gap-4 mb-4">
+//                 <input type="text" placeholder="Search by Patient ID" value={patientSearchId} onChange={(e) => setPatientSearchId(e.target.value)} className="p-2 border rounded-lg w-full max-w-xs text-gray-600" />
+//                 <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-all flex items-center gap-2"><FaFileDownload /> Generate Report</button>
+//               </div>
+//               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+//                 <table className="w-full text-left text-base">
+//                   <thead className="bg-gray-100 text-gray-700">
+//                     <tr>
+//                       <th className="p-4 font-semibold">Patient ID</th>
+//                       <th className="p-4 font-semibold">First Name</th>
+//                       <th className="p-4 font-semibold">Last Name</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Email</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
+//                       <th className="p-4 font-semibold">Actions</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {patients.filter((p) => !patientSearchId || p.patientId.includes(patientSearchId)).map((patient, index) => (
+//                       <tr key={patient.patientId} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-all`}>
+//                         <td className="p-4 text-gray-600">{patient.patientId}</td>
+//                         <td className="p-4 text-gray-600">{patient.firstname}</td>
+//                         <td className="p-4 text-gray-600">{patient.lastname}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{patient.email}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{patient.phone}</td>
+//                         <td className="p-4 space-x-3">
+//                           <button className="text-blue-500 hover:underline" onClick={() => openModal(setIsPatientModalOpen, setEditPatient, setPatientFormData, { patientId: "", userId: "", firstname: "", lastname: "", email: "", phone: "", dateOfBirth: "", address: "", gender: "", createdDate: "", lastModifiedDate: "" }, patient)}><FaEdit /></button>
+//                           <button className="text-red-500 hover:underline">Delete</button>
+//                         </td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//               {isPatientModalOpen && (
+//                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+//                   <motion.div className="bg-white rounded-lg shadow-xl w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+//                     <div className="bg-gradient-to-r from-blue-500 to-emerald-500 p-4 rounded-t-lg">
+//                       <h3 className="text-xl font-semibold text-white">{editPatient ? "Edit Patient" : "Add Patient"}</h3>
+//                     </div>
+//                     <form onSubmit={handlePatientSubmit} className="p-6 space-y-4">
+//                       <div><label className="block text-gray-700">First Name</label><input type="text" name="firstname" value={patientFormData.firstname} onChange={(e) => setPatientFormData({ ...patientFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Last Name</label><input type="text" name="lastname" value={patientFormData.lastname} onChange={(e) => setPatientFormData({ ...patientFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={patientFormData.email} onChange={(e) => setPatientFormData({ ...patientFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Phone</label><input type="text" name="phone" value={patientFormData.phone} onChange={(e) => setPatientFormData({ ...patientFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" /></div>
+//                       <div className="flex justify-end gap-4">
+//                         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+//                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={() => closeModal(setIsPatientModalOpen, setEditPatient, setPatientFormData, { patientId: "", userId: "", firstname: "", lastname: "", email: "", phone: "", dateOfBirth: "", address: "", gender: "", createdDate: "", lastModifiedDate: "" })}>Cancel</button>
+//                       </div>
+//                     </form>
+//                   </motion.div>
+//                 </motion.div>
+//               )}
+//             </div>
+//           )}
+
+//           {activeSection === "Appointments" && (
+//             <div className="space-y-6">
+//               <div className="flex justify-between items-center">
+//                 <h2 className="text-2xl font-semibold text-gray-800">Appointments</h2>
+//                 <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2" onClick={() => openModal(setIsAppointmentModalOpen, setEditAppointment, setAppointmentFormData, { AppoinmentID: "", patientId: "", doctorId: "", appoinment_Date: "", appoinment_Time: "", reason: "" })}>
+//                   <FaPlus /> Add Appointment
+//                 </button>
+//               </div>
+//               <div className="flex items-center gap-4 mb-4">
+//                 <input type="text" placeholder="Search by Appointment ID" value={appointmentSearchId} onChange={(e) => setAppointmentSearchId(e.target.value)} className="p-2 border rounded-lg w-full max-w-xs text-gray-600" />
+//                 <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-all flex items-center gap-2"><FaFileDownload /> Generate Report</button>
+//               </div>
+//               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+//                 <table className="w-full text-left text-base">
+//                   <thead className="bg-gray-100 text-gray-700">
+//                     <tr>
+//                       <th className="p-4 font-semibold">ID</th>
+//                       <th className="p-4 font-semibold">Patient</th>
+//                       <th className="p-4 font-semibold">Doctor</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Date</th>
+//                       <th className="p-4 font-semibold">Time</th>
+//                       <th className="p-4 font-semibold">Reason</th>
+//                       <th className="p-4 font-semibold">Actions</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {appointments.filter((a) => !appointmentSearchId || a.AppoinmentID.includes(appointmentSearchId)).map((appointment, index) => (
+//                       <tr key={appointment.AppoinmentID} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-all`}>
+//                         <td className="p-4 text-gray-600">{appointment.AppoinmentID}</td>
+//                         <td className="p-4 text-gray-600">{patients.find((p) => p.patientId === appointment.patientId)?.firstname || appointment.patientId}</td>
+//                         <td className="p-4 text-gray-600">{doctors.find((d) => d.id === appointment.doctorId)?.firstname || appointment.doctorId}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{appointment.appoinment_Date}</td>
+//                         <td className="p-4 text-gray-600">{appointment.appoinment_Time}</td>
+//                         <td className="p-4 text-gray-600">{appointment.reason}</td>
+//                         <td className="p-4 space-x-3">
+//                           <button className="text-blue-500 hover:underline" onClick={() => openModal(setIsAppointmentModalOpen, setEditAppointment, setAppointmentFormData, { AppoinmentID: "", patientId: "", doctorId: "", appoinment_Date: "", appoinment_Time: "", reason: "" }, appointment)}><FaEdit /></button>
+//                           <button className="text-red-500 hover:underline">Delete</button>
+//                         </td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//               {isAppointmentModalOpen && (
+//                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+//                   <motion.div className="bg-white rounded-lg shadow-xl w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+//                     <div className="bg-gradient-to-r from-blue-500 to-emerald-500 p-4 rounded-t-lg">
+//                       <h3 className="text-xl font-semibold text-white">{editAppointment ? "Edit Appointment" : "Add Appointment"}</h3>
+//                     </div>
+//                     <form onSubmit={handleAppointmentSubmit} className="p-6 space-y-4">
+//                       <div><label className="block text-gray-700">Patient</label><select name="patientId" value={appointmentFormData.patientId} onChange={(e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required><option value="">Select Patient</option>{patients.map((p) => <option key={p.patientId} value={p.patientId}>{p.firstname} {p.lastname}</option>)}</select></div>
+//                       <div><label className="block text-gray-700">Doctor</label><select name="doctorId" value={appointmentFormData.doctorId} onChange={(e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required><option value="">Select Doctor</option>{doctors.map((d) => <option key={d.id} value={d.id}>{d.firstname} {d.lastname}</option>)}</select></div>
+//                       <div><label className="block text-gray-700">Date</label><input type="date" name="appoinment_Date" value={appointmentFormData.appoinment_Date} onChange={(e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Time</label><input type="time" name="appoinment_Time" value={appointmentFormData.appoinment_Time} onChange={(e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Reason</label><input type="text" name="reason" value={appointmentFormData.reason} onChange={(e) => setAppointmentFormData({ ...appointmentFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div className="flex justify-end gap-4">
+//                         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+//                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={() => closeModal(setIsAppointmentModalOpen, setEditAppointment, setAppointmentFormData, { AppoinmentID: "", patientId: "", doctorId: "", appoinment_Date: "", appoinment_Time: "", reason: "" })}>Cancel</button>
+//                       </div>
+//                     </form>
+//                   </motion.div>
+//                 </motion.div>
+//               )}
+//             </div>
+//           )}
+
+//           {activeSection === "Medical Records" && (
+//             <div className="space-y-6">
+//               <div className="flex justify-between items-center">
+//                 <h2 className="text-2xl font-semibold text-gray-800">Medical Records</h2>
+//                 <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2" onClick={() => openModal(setIsMedicalRecordModalOpen, setEditMedicalRecord, setMedicalRecordFormData, { recordid: "", patientId: "", doctorId: "", diseasename: "", diagnosticdata: "", treatments: "", reporturl: "", createdAt: "" })}>
+//                   <FaPlus /> Add Record
+//                 </button>
+//               </div>
+//               <div className="flex items-center gap-4 mb-4">
+//                 <input type="text" placeholder="Search by Record ID" value={medicalRecordSearchId} onChange={(e) => setMedicalRecordSearchId(e.target.value)} className="p-2 border rounded-lg w-full max-w-xs text-gray-600" />
+//                 <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-all flex items-center gap-2"><FaFileDownload /> Generate Report</button>
+//               </div>
+//               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+//                 <table className="w-full text-left text-base">
+//                   <thead className="bg-gray-100 text-gray-700">
+//                     <tr>
+//                       <th className="p-4 font-semibold">ID</th>
+//                       <th className="p-4 font-semibold">Patient</th>
+//                       <th className="p-4 font-semibold">Doctor</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Disease</th>
+//                       <th className="p-4 font-semibold hidden md:table-cell">Report</th>
+//                       <th className="p-4 font-semibold">Actions</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {medicalRecords.filter((r) => !medicalRecordSearchId || r.recordid?.toString().includes(medicalRecordSearchId)).map((record, index) => (
+//                       <tr key={record.recordid} className={`border-b ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition-all`}>
+//                         <td className="p-4 text-gray-600">{record.recordid}</td>
+//                         <td className="p-4 text-gray-600">{patients.find((p) => p.patientId === record.patientId)?.firstname || record.patientId}</td>
+//                         <td className="p-4 text-gray-600">{doctors.find((d) => d.id === record.doctorId)?.firstname || record.doctorId}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{record.diseasename || "N/A"}</td>
+//                         <td className="p-4 hidden md:table-cell text-gray-600">{record.reporturl ? <button onClick={() => downloadReportUrl(record.reporturl, record.recordid)} className="text-emerald-500 hover:underline flex items-center gap-1"><FaFileDownload /> Download</button> : "N/A"}</td>
+//                         <td className="p-4 space-x-3">
+//                           <button className="text-blue-500 hover:underline" onClick={() => openModal(setIsMedicalRecordModalOpen, setEditMedicalRecord, setMedicalRecordFormData, { recordid: "", patientId: "", doctorId: "", diseasename: "", diagnosticdata: "", treatments: "", reporturl: "", createdAt: "" }, record)}><FaEdit /></button>
+//                           <button className="text-red-500 hover:underline">Delete</button>
+//                         </td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//               {isMedicalRecordModalOpen && (
+//                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+//                   <motion.div className="bg-white rounded-lg shadow-xl w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+//                     <div className="bg-gradient-to-r from-blue-500 to-emerald-500 p-4 rounded-t-lg">
+//                       <h3 className="text-xl font-semibold text-white">{editMedicalRecord ? "Edit Record" : "Add Record"}</h3>
+//                     </div>
+//                     <form onSubmit={handleMedicalRecordSubmit} className="p-6 space-y-4">
+//                       <div><label className="block text-gray-700">Patient</label><select name="patientId" value={medicalRecordFormData.patientId} onChange={(e) => setMedicalRecordFormData({ ...medicalRecordFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required><option value="">Select Patient</option>{patients.map((p) => <option key={p.patientId} value={p.patientId}>{p.firstname} {p.lastname}</option>)}</select></div>
+//                       <div><label className="block text-gray-700">Doctor</label><select name="doctorId" value={medicalRecordFormData.doctorId} onChange={(e) => setMedicalRecordFormData({ ...medicalRecordFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required><option value="">Select Doctor</option>{doctors.map((d) => <option key={d.id} value={d.id}>{d.firstname} {d.lastname}</option>)}</select></div>
+//                       <div><label className="block text-gray-700">Disease Name</label><input type="text" name="diseasename" value={medicalRecordFormData.diseasename} onChange={(e) => setMedicalRecordFormData({ ...medicalRecordFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" required /></div>
+//                       <div><label className="block text-gray-700">Report URL</label><input type="text" name="reporturl" value={medicalRecordFormData.reporturl} onChange={(e) => setMedicalRecordFormData({ ...medicalRecordFormData, [e.target.name]: e.target.value })} className="w-full p-2 border rounded-md" /></div>
+//                       <div className="flex justify-end gap-4">
+//                         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Save</button>
+//                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={() => closeModal(setIsMedicalRecordModalOpen, setEditMedicalRecord, setMedicalRecordFormData, { recordid: "", patientId: "", doctorId: "", diseasename: "", diagnosticdata: "", treatments: "", reporturl: "", createdAt: "" })}>Cancel</button>
+//                       </div>
+//                     </form>
+//                   </motion.div>
+//                 </motion.div>
+//               )}
+//             </div>
+//           )}
+
+//           {activeSection === "Logout" && <div className="text-center"><p className="text-xl text-gray-700" onClick={handleLogout}>Logging out...</p></div>}
+//         </motion.div>
+//       </motion.div>
+//     </div>
+//   );
+// }
