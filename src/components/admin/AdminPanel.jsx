@@ -460,6 +460,7 @@ import { FaUsers, FaUserMd, FaCalendarCheck, FaFileDownload, FaPlus, FaEdit, FaS
 import profileimg from "../../assets/profileimg.jpg";
 import { useNavigate } from "react-router-dom";
 import {  FaEye } from "react-icons/fa";
+import { Try } from "@mui/icons-material";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -498,7 +499,7 @@ export default function AdminDashboard() {
   // Modal states
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
   const [editDoctor, setEditDoctor] = useState(null);
-  const initialDoctorState = { id: "", firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" };
+  const initialDoctorState = { id: "",firstname: "", lastname: "", phonenumber: "", email: "", specilization: "", userId: "", experience: "", education: "" };
   const [doctorFormData, setDoctorFormData] = useState(initialDoctorState);
 
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
@@ -538,8 +539,8 @@ export default function AdminDashboard() {
       .then((res) => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
       .then((data) => {
         const mappedDoctors = data.map((doctor) => ({
-          id: doctor.doctor_Id || "", firstname: doctor.firstname || "", lastname: doctor.lastname || "",
-          phonenumber: doctor.phonenumber || "", email: doctor.email || "", specilization: doctor.specilization || doctor.specialization || "",
+          id: doctor.doctor_Id || "" , firstname: doctor.firstname || "", lastname: doctor.lastname || "",
+          phonenumber: doctor.phonenumber || "", email: doctor.email || "", specilization: doctor.specilization ||  "",
           userId: doctor.userId || "", experience: doctor.experience || "", education: doctor.education || "",
         }));
         setDoctors(mappedDoctors);
@@ -697,17 +698,220 @@ export default function AdminDashboard() {
           }
         };
 
-  const openDoctorModal = (doctor = null) => { setEditDoctor(doctor); setDoctorFormData(doctor || initialDoctorState); setIsDoctorModalOpen(true); };
-  const closeDoctorModal = () => { setIsDoctorModalOpen(false); setEditDoctor(null); setDoctorFormData(initialDoctorState); };
-  const handleDoctorChange = (e) => setDoctorFormData({ ...doctorFormData, [e.target.name]: e.target.value });
-  const handleDoctorSubmit = (e) => { e.preventDefault(); /* Add API call */ closeDoctorModal(); };
-  const handleDoctorDelete = (id) => { if (window.confirm("Are you sure?")) setDoctors(doctors.filter((d) => d.id !== id)); };
+  const openUpdateDoctorModal = (doctor = null) => { 
+    setEditDoctor(doctor); 
+    setDoctorFormData(doctor || initialDoctorState); 
+    setIsDoctorModalOpen(true); 
+  };
 
-  const openPatientModal = (patient = null) => { setEditPatient(patient); setPatientFormData(patient || initialPatientState); setIsPatientModalOpen(true); };
+  const openAddDoctorModal = (doctor = null) => { 
+    setEditDoctor(doctor); 
+    setDoctorFormData(doctor || initialDoctorState); 
+    setIsDoctorModalOpen(true); 
+  };
+  const closeDoctorModal = () => {
+     setIsDoctorModalOpen(false);
+      setEditDoctor(null); 
+      setDoctorFormData(initialDoctorState);
+     };
+
+  const handleDoctorChange = (e) => setDoctorFormData({
+     ...doctorFormData, [e.target.name]: e.target.value 
+    });
+  const handleAddDoctorSubmit = async(e) => { 
+    e.preventDefault(); 
+    const token =localStorage.getItem("token");
+
+    try{
+        const response = await fetch("http://localhost:8082/doctors/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        
+        firstname: doctorFormData.firstname,
+        lastname: doctorFormData.lastname,
+        phonenumber: doctorFormData.phonenumber,
+        email: doctorFormData.email,
+        specilization: doctorFormData.specilization, // Corrected field
+        userId: doctorFormData.userId || null,
+        experience: doctorFormData.experience,
+        education: doctorFormData.education,
+      }),
+    });
+        if(!response.ok){
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const newDoctor =await response.json();
+        setDoctors([...doctors,{...newDoctor,id: newDoctor.doctor_Id}]);
+        closeDoctorModal();
+        alert("new doctor added succesfully");
+    }
+    catch(error){
+      console.error("Error adding doctor:", error);
+    alert("Failed to add doctor. Please try again.");
+    }
+    /* Add API call */ 
+  };
+
+
+  // Handle updating an existing doctor
+  const handleUpdateDoctorSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+  
+    const payload = {
+      doctor_Id: editDoctor.id,
+      firstname: doctorFormData.firstname,
+      lastname: doctorFormData.lastname,
+      phonenumber: doctorFormData.phonenumber,
+      email: doctorFormData.email,
+      specilization: doctorFormData.specilization,
+      userId: doctorFormData.userId,
+      experience: doctorFormData.experience,
+      education: doctorFormData.education,
+    };
+    console.log("PUT Payload:", JSON.stringify(payload));
+  
+    try {
+      const response = await fetch(`http://localhost:8082/doctors/update/${editDoctor.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const responseText = await response.text();
+      console.log("Raw Response:", responseText);
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
+      }
+  
+      // Assume success if response is text like "Doctor Updated Successfully"
+      const updatedDoctor = { ...payload, doctor_Id: editDoctor.id }; // Use sent data
+      setDoctors(doctors.map((d) => (d.id === updatedDoctor.doctor_Id ? { ...d, ...updatedDoctor } : d)));
+      closeDoctorModal();
+      alert("Doctor updated successfully!");
+    } catch (error) {
+      console.error("Error updating doctor:", error);
+      alert(`Failed to update doctor: ${error.message}`);
+    }
+  };
+ // Handle delete
+const handleDoctorDelete = async (id) => {
+  if (window.confirm("Are you sure?")) {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`http://localhost:8082/doctors/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setDoctors(doctors.filter((d) => d.id !== id));
+      alert("Doctor deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting doctor:", error);
+      alert("Failed to delete doctor. Please try again.");
+    }
+  }
+};
+
+  const openUpdatePatientModal = (patient = null) => { setEditPatient(patient); setPatientFormData(patient || initialPatientState); setIsPatientModalOpen(true); };
   const closePatientModal = () => { setIsPatientModalOpen(false); setEditPatient(null); setPatientFormData(initialPatientState); };
   const handlePatientChange = (e) => setPatientFormData({ ...patientFormData, [e.target.name]: e.target.value });
-  const handlePatientSubmit = (e) => { e.preventDefault(); /* Add API call */ closePatientModal(); };
-  const handlePatientDelete = (id) => { if (window.confirm("Are you sure?")) setPatients(patients.filter((p) => p.patientId !== id)); };
+
+  
+  const handleUpdatePatientSubmit = async (e) => {
+    e.preventDefault();
+    console.log("handleUpdatePatientSubmit called"); // Confirm function runs
+  
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found in localStorage");
+      alert("Authentication token missing. Please log in again.");
+      return;
+    }
+  
+    const payload = {
+      patientId: editPatient.patientId,
+      userId: patientFormData.userId,
+      firstname: patientFormData.firstname,
+      lastname: patientFormData.lastname,
+      email: patientFormData.email,
+      phone: patientFormData.phone,
+      dateOfBirth: patientFormData.dateOfBirth,
+      address: patientFormData.address,
+      gender: patientFormData.gender,
+      createdDate: patientFormData.createdDate || editPatient.createdDate,
+      lastModifiedDate: patientFormData.lastModifiedDate || editPatient.lastModifiedDate
+    };
+    console.log("PUT Payload:", JSON.stringify(payload));
+  
+    try {
+      console.log("Sending fetch request...");
+      const response = await fetch(`http://localhost:8083/pateints/update/${editPatient.patientId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      console.log("Response received, status:", response.status);
+      const responseText = await response.text();
+      console.log("Raw Response:", responseText);
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
+      }
+  
+      const updatedPatient = { ...payload, patientId: editPatient.patientId };
+      console.log("Updating patient state with:", updatedPatient);
+      setPatients(patients.map((p) => (p.patientId === updatedPatient.patientId ? { ...p, ...updatedPatient } : p)));
+      closePatientModal();
+      alert("Patient updated successfully!");
+    } catch (error) {
+      console.error("Error updating patient:", error);
+      alert(`Failed to update patient: ${error.message}`);
+    }
+  };
+ // Handle delete
+const handlePatientDelete = async (id) => {
+  if (window.confirm("Are you sure?")) {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`http://localhost:8082/doctors/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setPatients(patients.filter((d) => p.patientId !== patientId));
+      alert("patient deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+      alert("Failed to delete patietn. Please try again.");
+    }
+  }
+};
 
   const openAppointmentModal = (appointment = null) => { setEditAppointment(appointment); setAppointmentFormData(appointment || initialAppointmentState); setIsAppointmentModalOpen(true); };
   const closeAppointmentModal = () => { setIsAppointmentModalOpen(false); setEditAppointment(null); setAppointmentFormData(initialAppointmentState); };
@@ -1044,7 +1248,8 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-semibold text-blue-900">Doctors</h2>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" onClick={() => openDoctorModal()}>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2" 
+                onClick={() => openAddDoctorModal()}>
                   <FaPlus /> Add Doctor
                 </button>
               </div>
@@ -1065,11 +1270,14 @@ export default function AdminDashboard() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="p-4 font-semibold">ID</th>
+                      <th className="p-4 font-semibold">User ID</th>
                       <th className="p-4 font-semibold">First Name</th>
                       <th className="p-4 font-semibold">Last Name</th>
                       <th className="p-4 font-semibold hidden md:table-cell">Phone</th>
                       <th className="p-4 font-semibold hidden md:table-cell">Email</th>
                       <th className="p-4 font-semibold">Specialization</th>
+                      <th className="p-4 font-semibold">Experience</th>
+                      <th className="p-4 font-semibold">Education</th>
                       <th className="p-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -1083,13 +1291,16 @@ export default function AdminDashboard() {
             .map((doctor) => (
               <tr key={doctor.id} className="border-b hover:bg-gray-50 transition-all">
                 <td className="p-4">{doctor.id}</td>
+                <td className="p-4">{doctor.userId}</td>
                 <td className="p-4">{doctor.firstname}</td>
                 <td className="p-4">{doctor.lastname}</td>
                 <td className="p-4 hidden md:table-cell">{doctor.phonenumber || "N/A"}</td>
                 <td className="p-4 hidden md:table-cell">{doctor.email || "N/A"}</td>
                 <td className="p-4">{doctor.specilization}</td>
+                <td className="p-4">{doctor.experience}</td>
+                <td className="p-4">{doctor.education}</td>
                 <td className="p-4 space-x-3">
-                  <button className="text-blue-600 hover:underline" onClick={() => openDoctorModal(doctor)}><FaEdit /></button>
+                  <button className="text-blue-600 hover:underline" onClick={() => openUpdateDoctorModal(doctor)}><FaEdit /></button>
                   <button className="text-red-600 hover:underline" onClick={() => handleDoctorDelete(doctor.id)}>Delete</button>
                 </td>
               </tr>
@@ -1100,15 +1311,21 @@ export default function AdminDashboard() {
               {isDoctorModalOpen && (
                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
-                    <h3 className="text-xl font-semibold text-blue-900 mb-4">{editDoctor ? "Edit Doctor" : "Add Doctor"}</h3>
-                    <form onSubmit={handleDoctorSubmit} className="space-y-4">
+                        <h3 className="text-xl font-semibold text-blue-900 mb-4">
+                  {editDoctor ? "Update Doctor" : "Add New Doctor"} {/* Differentiated title */}
+                </h3>
+                <form onSubmit={editDoctor ? handleUpdateDoctorSubmit : handleAddDoctorSubmit} className="space-y-4">
+                <div><label className="block text-gray-700">user Id</label><input type="text" name="userid" value={doctorFormData.userId} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
+
                       <div><label className="block text-gray-700">First Name</label><input type="text" name="firstname" value={doctorFormData.firstname} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
                       <div><label className="block text-gray-700">Last Name</label><input type="text" name="lastname" value={doctorFormData.lastname} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
                       <div><label className="block text-gray-700">Phone</label><input type="text" name="phonenumber" value={doctorFormData.phonenumber} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" /></div>
                       <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={doctorFormData.email} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
                       <div><label className="block text-gray-700">Specialization</label><input type="text" name="specilization" value={doctorFormData.specilization} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Experinece</label><input type="text" name="experience" value={doctorFormData.experience} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
+                      <div><label className="block text-gray-700">Education</label><input type="text" name="education" value={doctorFormData.education} onChange={handleDoctorChange} className="w-full p-2 border rounded-md" required /></div>
                       <div className="flex justify-end gap-4">
-                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">{editDoctor ? "Update" : "Add"} {/* Differentiated button text */}</button>
                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closeDoctorModal}>Cancel</button>
                       </div>
                     </form>
@@ -1171,7 +1388,7 @@ export default function AdminDashboard() {
                         <td className="p-4">{patient.createdDate}</td>
                         <td className="p-4">{patient.lastModifiedDate}</td>
                         <td className="p-4 space-x-3">
-                          <button className="text-blue-600 hover:underline" onClick={() => openPatientModal(patient)}><FaEdit /></button>
+                          <button className="text-blue-600 hover:underline" onClick={() => openUpdatePatientModal(patient)}><FaEdit /></button>
                           <button className="text-red-600 hover:underline" onClick={() => handlePatientDelete(patient.patientId)}>Delete</button>
                         </td>
                       </tr>
@@ -1183,14 +1400,16 @@ export default function AdminDashboard() {
                 <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <motion.div className="bg-white rounded-lg p-6 w-full max-w-md" initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
                     <h3 className="text-xl font-semibold text-blue-900 mb-4">{editPatient ? "Edit Patient" : "Add Patient"}</h3>
-                    <form onSubmit={handlePatientSubmit} className="space-y-4">
+                    <form onSubmit={handleUpdatePatientSubmit} className="space-y-4">
+                    <div><label className="block text-gray-700">User Id</label><input type="text" name="userId" value={patientFormData.userId} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
+
                       <div><label className="block text-gray-700">First Name</label><input type="text" name="firstname" value={patientFormData.firstname} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
                       <div><label className="block text-gray-700">Last Name</label><input type="text" name="lastname" value={patientFormData.lastname} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
                       <div><label className="block text-gray-700">Email</label><input type="email" name="email" value={patientFormData.email} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
                       <div><label className="block text-gray-700">Phone</label><input type="text" name="phone" value={patientFormData.phone} onChange={handlePatientChange} className="w-full p-2 border rounded-md" /></div>
                       <div><label className="block text-gray-700">Date of Birth</label><input type="date" name="dateOfBirth" value={patientFormData.dateOfBirth} onChange={handlePatientChange} className="w-full p-2 border rounded-md" required /></div>
                       <div className="flex justify-end gap-4">
-                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save</button>
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">{editPatient ? "Edit Patient" : "Add Patient"}</button>
                         <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500" onClick={closePatientModal}>Cancel</button>
                       </div>
                     </form>
