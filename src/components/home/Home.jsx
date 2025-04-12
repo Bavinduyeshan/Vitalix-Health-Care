@@ -3,19 +3,55 @@ import { motion } from "framer-motion";
 import { Link } from 'react-router-dom';
 import qrImage from "../../assets/qrimg2.jpeg"; // Your QR code image
 import hosimg from "../../assets/hosimg.jpeg"; // Your hospital/doctor image
+import { FaSpinner } from "react-icons/fa";
 
 
 export default function Home() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-
+  const [doctors, setDoctors] = useState([]); // Added for API data
+  const [loading, setLoading] = useState(true); // Added for loading state
+  const [error, setError] = useState(null); // Added for error state
   useEffect(() => {
     const box = document.querySelector('.home-box');
     if (box) {
       box.classList.add('opacity-0');
       setTimeout(() => box.classList.remove('opacity-0'), 100);
     }
+
+
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("http://localhost:8082/doctors/getAll");
+        if (!response.ok) {
+          throw new Error("Failed to fetch doctors");
+        }
+        const data = await response.json();
+        // Map API data to UI format
+        const formattedDoctors = data.map((doctor) => ({
+          id: doctor.doctor_Id,
+          name: `${doctor.firstname}  ${doctor.lastname}`,
+          specialty: doctor.specilization || "General Practitioner",
+          description: doctor.description || `Dr. ${doctor.lastname} is a dedicated professional with extensive experience in ${doctor.specilization || "healthcare"}.`,
+          education: doctor.education || "MD, Medical School",
+          experience: doctor.experience || "Not specified",
+          contact: doctor.emial || doctor.phonenumber || "Not available",
+        }));
+        setDoctors(formattedDoctors);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    fetchDoctors();
+    
   }, []);
 
+  
+
+  
+  
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -49,35 +85,35 @@ export default function Home() {
   };
 
   // Sample doctor data
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. John Smith",
-      specialty: "Cardiologist",
-      description: "Specializing in heart health with over 15 years of experience. Expertise in cardiovascular diagnostics and treatment.",
-      education: "MD, Harvard Medical School",
-      experience: "15+ years",
-      contact: "john.smith@healthcarehub.com",
-    },
-    {
-      id: 2,
-      name: "Dr. Emily Johnson",
-      specialty: "Neurologist",
-      description: "Expert in neurological disorders with a focus on patient care. Skilled in managing epilepsy and stroke cases.",
-      education: "MD, Johns Hopkins University",
-      experience: "12+ years",
-      contact: "emily.johnson@healthcarehub.com",
-    },
-    {
-      id: 3,
-      name: "Dr. Michael Brown",
-      specialty: "Pediatrician",
-      description: "Dedicated to the health and well-being of children. Experienced in pediatric care and developmental health.",
-      education: "MD, Stanford University",
-      experience: "10+ years",
-      contact: "michael.brown@healthcarehub.com",
-    },
-  ];
+  // const doctors = [
+  //   {
+  //     id: 1,
+  //     name: "Dr. John Smith",
+  //     specialty: "Cardiologist",
+  //     description: "Specializing in heart health with over 15 years of experience. Expertise in cardiovascular diagnostics and treatment.",
+  //     education: "MD, Harvard Medical School",
+  //     experience: "15+ years",
+  //     contact: "john.smith@healthcarehub.com",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Dr. Emily Johnson",
+  //     specialty: "Neurologist",
+  //     description: "Expert in neurological disorders with a focus on patient care. Skilled in managing epilepsy and stroke cases.",
+  //     education: "MD, Johns Hopkins University",
+  //     experience: "12+ years",
+  //     contact: "emily.johnson@healthcarehub.com",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Dr. Michael Brown",
+  //     specialty: "Pediatrician",
+  //     description: "Dedicated to the health and well-being of children. Experienced in pediatric care and developmental health.",
+  //     education: "MD, Stanford University",
+  //     experience: "10+ years",
+  //     contact: "michael.brown@healthcarehub.com",
+  //   },
+  // ];
 
   const openProfile = (doctor) => setSelectedDoctor(doctor);
   const closeProfile = () => setSelectedDoctor(null);
@@ -90,6 +126,8 @@ export default function Home() {
       navigate("/profile");
     }
   };
+
+  
 
   return (
     <div className="bg-gradient-to-b from-blue-50 to-white min-h-screen font-sans relative">
@@ -206,40 +244,68 @@ export default function Home() {
       </motion.div>
 
       {/* Doctors Section */}
-      <motion.div className="w-[95%] sm:w-[90%] max-w-7xl mx-auto mt-12 md:mt-20 mb-12 md:mb-20 py-8 md:py-16" variants={containerVariants} initial="hidden" animate="visible">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl text-blue-900 text-center font-bold mb-8 md:mb-12">Meet Our Expert Doctors</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 px-4 sm:px-0">
-          {doctors.map((doctor) => (
-            <motion.div
-              key={doctor.id}
-              className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:bg-blue-50"
-              variants={cardVariants}
-              whileHover={{ scale: 1.05, y: -10 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-0 hover:opacity-50 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <motion.img
-                  src={hosimg}
-                  alt={doctor.name}
-                  className="border-4 border-blue-200 h-32 w-32 sm:h-40 sm:w-40 rounded-full mb-4 mx-auto object-cover"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ duration: 0.3 }}
-                />
-                <h3 className="text-lg sm:text-2xl text-blue-900 font-semibold mb-2">{doctor.name}</h3>
-                <p className="text-blue-600 font-medium text-sm sm:text-base">{doctor.specialty}</p>
-                <p className="text-gray-600 text-sm sm:text-base leading-relaxed mt-3">{doctor.description.split('.')[0] + '.'}</p>
-                <motion.button
-                  onClick={() => openProfile(doctor)}
-                  className="mt-4 sm:mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  View Profile
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+      {/* Doctors Section */}
+      <motion.div
+        className="w-[95%] sm:w-[90%] max-w-7xl mx-auto mt-12 md:mt-20 mb-12 md:mb-20 py-8 md:py-16"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <h2 className="text-3xl sm:text-4xl md:text-5xl text-blue-900 text-center font-bold mb-8 md:mb-12">
+          Meet Our Expert Doctors
+        </h2>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <FaSpinner className="text-blue-600 text-4xl animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-600 text-lg">
+            Error: {error}. Please try again later.
+          </div>
+        ) : doctors.length === 0 ? (
+          <div className="text-center text-gray-600 text-lg">
+            No doctors available at this time.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 px-4 sm:px-0">
+            {doctors.map((doctor) => (
+              <motion.div
+                key={doctor.id}
+                className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:bg-blue-50 "
+                variants={cardVariants}
+                whileHover={{ scale: 1.05, y: -10 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-0 hover:opacity-50 transition-opacity duration-500"></div>
+                <div className="relative z-10">
+                  <motion.img
+                    src={hosimg}
+                    alt={doctor.name}
+                    className="border-4 border-blue-200 h-32 w-32 sm:h-40 sm:w-40 rounded-full mb-4 mx-auto object-cover"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <h3 className="text-lg sm:text-2xl text-blue-900 font-semibold mb-2">
+                    {doctor.name}
+                  </h3>
+                  <p className="text-blue-600 font-medium text-sm sm:text-base">
+                    {doctor.specialty}
+                  </p>
+                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed mt-3">
+                    {doctor.description.split(".")[0] + "."}
+                  </p>
+                  <motion.button
+                    onClick={() => openProfile(doctor)}
+                    className="mt-4 sm:mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    View Profile
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </motion.div>
 
       {/* Doctor Profile Modal */}
@@ -271,13 +337,25 @@ export default function Home() {
                 alt={selectedDoctor.name}
                 className="border-4 border-blue-200 h-24 w-24 sm:h-32 sm:w-32 rounded-full mb-4 object-cover"
               />
-              <h3 className="text-xl sm:text-2xl md:text-3xl text-blue-900 font-semibold mb-2 text-center">{selectedDoctor.name}</h3>
-              <p className="text-blue-600 font-medium text-sm sm:text-base md:text-lg mb-4">{selectedDoctor.specialty}</p>
+              <h3 className="text-xl sm:text-2xl md:text-3xl text-blue-900 font-semibold mb-2 text-center">
+                {selectedDoctor.name}
+              </h3>
+              <p className="text-blue-600 font-medium text-sm sm:text-base md:text-lg mb-4">
+                {selectedDoctor.specialty}
+              </p>
               <div className="text-gray-700 text-sm sm:text-base md:text-lg space-y-3">
-                <p><strong>About:</strong> {selectedDoctor.description}</p>
-                <p><strong>Education:</strong> {selectedDoctor.education}</p>
-                <p><strong>Experience:</strong> {selectedDoctor.experience}</p>
-                <p><strong>Contact:</strong> {selectedDoctor.contact}</p>
+                <p>
+                  <strong>About:</strong> {selectedDoctor.description}
+                </p>
+                <p>
+                  <strong>Education:</strong> {selectedDoctor.education}
+                </p>
+                <p>
+                  <strong>Experience:</strong> {selectedDoctor.experience}
+                </p>
+                <p>
+                  <strong>Contact:</strong> {selectedDoctor.contact}
+                </p>
               </div>
               <motion.button
                 onClick={closeProfile}
