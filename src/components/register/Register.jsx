@@ -633,7 +633,7 @@ export default function Register() {
       }}
     >
       {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-blue-900 opacity-50"></div>
+      <div className="absolute inset-0 bg-blue-900 opacity-50 h-[103vh]"></div>
 
       <motion.div
         className="relative bg-white bg-opacity-90 p-8 rounded-xl shadow-2xl max-w-md w-full z-10"

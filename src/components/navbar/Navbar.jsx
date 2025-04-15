@@ -649,7 +649,7 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg rounded-3xl m-4"
+      className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg rounded-3xl m-1"
       variants={navbarVariants}
       initial="hidden"
       animate="visible"

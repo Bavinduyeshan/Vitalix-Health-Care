@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import qrImage from "../../assets/qrimg2.jpeg"; // Your QR code image
 import hosimg from "../../assets/hosimg.jpeg"; // Your hospital/doctor image
 import { FaSpinner } from "react-icons/fa";
+import Footer from '../footer/Footer';
 
 
 export default function Home() {
@@ -369,6 +370,7 @@ export default function Home() {
           </motion.div>
         </motion.div>
       )}
+      <Footer />
     </div>
   );
 }

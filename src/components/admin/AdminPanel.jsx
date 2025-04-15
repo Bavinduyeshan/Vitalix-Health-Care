@@ -35,6 +35,9 @@ export default function AdminDashboard() {
   };
 
   // State for data
+    const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
+    const [username, setUsername] = useState(localStorage.getItem("username") || "");
+  
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -144,9 +147,41 @@ export default function AdminDashboard() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
   };
 
+
+
+   // Fetch user data based on username
+   const fetchUserData = async () => {
+    setFetchStatus({ loading: true, error: null });
+    try {
+      const storedUsername = localStorage.getItem("username")?.split(" ")[0];
+      const response = await fetch(`http://localhost:8080/users/byUsername/${storedUsername}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUserId(userData.id);
+        setUsername(`${userData.username}`);
+        localStorage.setItem("userId", userData.id);
+        localStorage.setItem("username", `${userData.username}`);
+        setFetchStatus({ loading: false, error: null });
+      } else {
+        throw new Error("Failed to load user data.");
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      setFetchStatus({ loading: false, error: "Authentication error. Please log in again." });
+    }
+  };
+
   // Fetch data on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
+    fetchUserData();
     fetch("http://localhost:8082/doctors/getAll", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -1023,7 +1058,7 @@ export default function AdminDashboard() {
           />
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 tracking-tight">
-              Welcome, {adminUsername}
+              Welcome, {username}
             </h1>
             <p className="text-gray-500 text-sm mt-1 italic">
               Overseeing healthcare with care and precision
@@ -1845,6 +1880,7 @@ export default function AdminDashboard() {
                         
                       
                       .map((patient) => (
+                       
                         <tr
                           key={patient.patientId}
                           className="border-t hover:bg-blue-50 transition-all duration-200"
@@ -1925,14 +1961,20 @@ export default function AdminDashboard() {
                         <label className="block text-gray-600 text-sm font-medium mb-1.5">
                           User ID
                         </label>
-                        <input
-                          type="text"
-                          name="userId"
-                          value={patientFormData.userId}
-                          onChange={handlePatientChange}
-                          className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-all text-gray-700"
-                          required
-                        />
+                        <select
+                            name="userId"
+                            value={patientFormData.userId}
+                            onChange={handlePatientChange}
+                            className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-all text-gray-700"
+                            required
+                          >
+                            <option value="">Select User</option>
+                            {users.map((user) => (
+                              <option key={user.userId} value={user.userId}>
+                                {`${user.username} (${user.userId})`}
+                              </option>
+                            ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-gray-600 text-sm font-medium mb-1.5">
@@ -2635,7 +2677,7 @@ export default function AdminDashboard() {
 )}
 
           {activeSection === "Logout" && <div className="text-center"><p className="text-xl text-gray-700" onClick={handleLogout}>Logging out...</p></div>}
-        </motion.div>
+        </motion.div>  
       </motion.div>
     </div>
   );

@@ -1,26 +1,21 @@
 
-
-// //corect one below
-
 // import React, { useState, useEffect } from "react";
-// import { useLocation, useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 // import { motion } from "framer-motion";
-// import { FaUser, FaFileMedical, FaHome, FaQuestionCircle, FaSignOutAlt, FaEdit, FaQrcode, FaDownload, FaShareAlt,FaCalendarPlus } from "react-icons/fa";
-// import profileimg from "../../assets/profileimg.jpg"; // Adjust path
-// import hospitalIllustration from "../../assets/hosimg.jpeg"; // Adjust path
+// import { FaUser, FaFileMedical, FaHome, FaQuestionCircle, FaSignOutAlt, FaEdit, FaQrcode, FaDownload, FaShareAlt, FaCalendarPlus } from "react-icons/fa";
+// import profileimg from "../../assets/profileimg.jpg";
+// import hospitalIllustration from "../../assets/hosimg.jpeg";
 
 // export default function Profile() {
-//   const { state } = useLocation();
 //   const navigate = useNavigate();
-//   const initialUserId = state?.userId;
-//   const [userId, setUserId] = useState(initialUserId);
+//   const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
 //   const [patientData, setPatientData] = useState(null);
 //   const [medicalRecords, setMedicalRecords] = useState([]);
 //   const [selectedRecord, setSelectedRecord] = useState(null);
 //   const [fetchStatus, setFetchStatus] = useState({ loading: false, error: null });
 //   const [medicalFetchStatus, setMedicalFetchStatus] = useState({ loading: false, error: null });
 //   const [currentView, setCurrentView] = useState("dashboard");
-//   const [username, setUserName] = useState("");
+//   const [username, setUserName] = useState(localStorage.getItem("username") );
 //   const [showPatientDataError, setShowPatientDataError] = useState(false);
 //   const [updateFormData, setUpdateFormData] = useState(null);
 //   const [updateStatus, setUpdateStatus] = useState({ loading: false, success: null, error: null });
@@ -29,7 +24,43 @@
 
 //   const token = localStorage.getItem("token");
 
+//   const fetchUserData = async () => {
+//     setFetchStatus({ loading: true, error: null });
+//     try {
+//       const storedUsername = localStorage.getItem("username")?.split(" ")[0]; // Use first part of username
+//       const response = await fetch(`http://localhost:8080/users/byUsername/${storedUsername}`, {
+//         method: "GET",
+//         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+//       });
+//       if (response.ok) {
+//         const userData = await response.json();
+//         setUserId(userData.id);
+//         setUserName(`${userData.username} `);
+//         localStorage.setItem("userId", userData.id);
+//         localStorage.setItem("username", `${userData.username} `);
+//         setFetchStatus({ loading: false, error: null });
+//       } else {
+//         console.error("Failed to fetch user data:", response.statusText);
+//         setFetchStatus({ loading: false, error: "Failed to load user data. Please try again." });
+//       }
+//     } catch (err) {
+//       console.error("Error fetching user data:", err);
+//       setFetchStatus({ loading: false, error: "Authentication error. Please log in again." });
+//     }
+//   };
 
+//   useEffect(() => {
+//     console.log("Token:", token);
+//     console.log("UserId:", userId);
+//     if (!token) {
+//       navigate("/login");
+//       return;
+//     }
+
+//     if (!userId) {
+//       fetchUserData();
+//     }
+//   }, [userId, token, navigate]);
 //   const handleBookAppointment = () => {
 //     if (!patientData) {
 //       fetchPatientData().then(() => {
@@ -42,7 +73,6 @@
 //     }
 //   };
 
-//   // --- Handlers Defined Up Top ---
 //   const handleViewPatientData = () => {
 //     setCurrentView("patientData");
 //     if (!patientData) fetchPatientData();
@@ -166,6 +196,9 @@
 
 //   const handleLogout = () => {
 //     localStorage.removeItem("token");
+//     localStorage.removeItem("userRole");
+//     localStorage.removeItem("userId");
+//     localStorage.removeItem("username");
 //     navigate("/login");
 //   };
 
@@ -213,7 +246,6 @@
 //     }
 //   };
 
-//   // --- Fetch Functions ---
 //   const fetchPatientData = async () => {
 //     setFetchStatus({ loading: true, error: null });
 //     try {
@@ -279,34 +311,14 @@
 //     }
 //   };
 
-//   useEffect(() => {
-//     if (!token) {
-//       navigate("/login");
-//       return;
-//     }
-//     if (!userId) {
-//       const fetchUserData = async () => {
-//         try {
-//           const userResponse = await fetch("http://localhost:8080/users/api/user/me", {
-//             method: "GET",
-//             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-//           });
-//           if (userResponse.ok) {
-//             const userData = await userResponse.json();
-//             setUserId(userData.id);
-//             setUserName(`${userData.firstname} ${userData.lastname}`);
-//           } else {
-//             navigate("/login");
-//           }
-//         } catch (err) {
-//           navigate("/login");
-//         }
-//       };
-//       fetchUserData();
-//     }
-//   }, [userId, navigate]);
-
 //   const renderContent = () => {
+//     if (!userId && fetchStatus.loading) {
+//       return <p className="text-center text-gray-500">Loading profile...</p>;
+//     }
+//     if (fetchStatus.error) {
+//       return <p className="text-center text-red-500">{fetchStatus.error}</p>;
+//     }
+
 //     switch (currentView) {
 //       case "dashboard":
 //         return (
@@ -535,9 +547,19 @@
 //                   <p><strong>Treatment:</strong> {selectedRecord.treatments || "N/A"}</p>
 //                   <p><strong>Date:</strong> {new Date(selectedRecord.createdAt).toLocaleDateString()}</p>
 //                   <p><strong>Doctor:</strong> {selectedRecord.doctorName || "N/A"}</p>
-//                   <p><strong>Report:</strong> {selectedRecord.reportUrl ? (
-//                     <a href={selectedRecord.reportUrl} target="_blank" rel="noopener noreferrer" className="text-teal-500 hover:underline">View Report</a>
-//                   ) : "N/A"}</p>
+//                   <p><strong>Report:</strong>{" "}
+//               {selectedRecord.reportUrl ? (
+//                 <a
+//                   href={`http://localhost:8081${selectedRecord.reportUrl}`} // Full URL
+//                   target="_blank"
+//                   rel="noopener noreferrer"
+//                   className="text-teal-500 hover:underline"
+//                 >
+//                   View Report
+//                 </a>
+//               ) : (
+//                 "N/A"
+//               )}</p>
 //                 </div>
 //                 <motion.button
 //                   onClick={handleCloseRecord}
@@ -637,7 +659,7 @@
 //             { icon: FaEdit, text: "Update Patient Data", onClick: handleUpdatePatientData },
 //             { icon: FaFileMedical, text: "View Medical Data", onClick: handleViewMedicalData },
 //             { icon: FaQrcode, text: "Generate QR", onClick: handleGenerateQR },
-//             { icon: FaCalendarPlus, text: "Book Appointment", onClick: handleBookAppointment }, // Added new button
+//             { icon: FaCalendarPlus, text: "Book Appointment", onClick: handleBookAppointment },
 //             { icon: FaHome, text: "Back to Home", onClick: handleBackToHome },
 //             { icon: FaQuestionCircle, text: "Help", onClick: handleHelp },
 //           ].map((item, index) => (
@@ -678,15 +700,30 @@
 //   );
 // }
 
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaUser, FaFileMedical, FaHome, FaQuestionCircle, FaSignOutAlt, FaEdit, FaQrcode, FaDownload, FaShareAlt, FaCalendarPlus } from "react-icons/fa";
-import profileimg from "../../assets/profileimg.jpg";
+import {
+  FaUser,
+  FaFileMedical,
+  FaHome,
+  FaQuestionCircle,
+  FaSignOutAlt,
+  FaEdit,
+  FaQrcode,
+  FaDownload,
+  FaShareAlt,
+  FaCalendarPlus,
+} from "react-icons/fa";
+import profileImg from "../../assets/profileimg.jpg";
 import hospitalIllustration from "../../assets/hosimg.jpeg";
 
+// Profile component for managing patient data and interactions
 export default function Profile() {
   const navigate = useNavigate();
+
+  // State management
   const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
   const [patientData, setPatientData] = useState(null);
   const [medicalRecords, setMedicalRecords] = useState([]);
@@ -694,7 +731,7 @@ export default function Profile() {
   const [fetchStatus, setFetchStatus] = useState({ loading: false, error: null });
   const [medicalFetchStatus, setMedicalFetchStatus] = useState({ loading: false, error: null });
   const [currentView, setCurrentView] = useState("dashboard");
-  const [username, setUserName] = useState(localStorage.getItem("username") );
+  const [username, setUsername] = useState(localStorage.getItem("username") || "");
   const [showPatientDataError, setShowPatientDataError] = useState(false);
   const [updateFormData, setUpdateFormData] = useState(null);
   const [updateStatus, setUpdateStatus] = useState({ loading: false, success: null, error: null });
@@ -703,24 +740,28 @@ export default function Profile() {
 
   const token = localStorage.getItem("token");
 
+  // Fetch user data based on username
   const fetchUserData = async () => {
     setFetchStatus({ loading: true, error: null });
     try {
-      const storedUsername = localStorage.getItem("username")?.split(" ")[0]; // Use first part of username
+      const storedUsername = localStorage.getItem("username")?.split(" ")[0];
       const response = await fetch(`http://localhost:8080/users/byUsername/${storedUsername}`, {
         method: "GET",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
+
       if (response.ok) {
         const userData = await response.json();
         setUserId(userData.id);
-        setUserName(`${userData.username} `);
+        setUsername(`${userData.username}`);
         localStorage.setItem("userId", userData.id);
-        localStorage.setItem("username", `${userData.username} `);
+        localStorage.setItem("username", `${userData.username}`);
         setFetchStatus({ loading: false, error: null });
       } else {
-        console.error("Failed to fetch user data:", response.statusText);
-        setFetchStatus({ loading: false, error: "Failed to load user data. Please try again." });
+        throw new Error("Failed to load user data.");
       }
     } catch (err) {
       console.error("Error fetching user data:", err);
@@ -728,18 +769,156 @@ export default function Profile() {
     }
   };
 
+  // Fetch patient data by user ID
+  const fetchPatientData = async () => {
+    setFetchStatus({ loading: true, error: null });
+    try {
+      const response = await fetch(`http://localhost:8083/pateints/patient/byUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPatientData(data);
+        setFetchStatus({ loading: false, error: null });
+        return data;
+      } else {
+        throw new Error("Failed to fetch patient data.");
+      }
+    } catch (err) {
+      setFetchStatus({ loading: false, error: err.message });
+      setShowPatientDataError(true);
+    }
+  };
+
+  // // Fetch medical records for the patient
+  const fetchMedicalRecords = async () => {
+    // if (!patientData) await fetchPatientData();
+    // if (!patientData) return;
+
+    setMedicalFetchStatus({ loading: true, error: null });
+    
+    try {
+          // Fetch patient data if userId is available
+      let patientId = patientData?.patientId;
+      if (!patientId && userId) {
+        const patient = await fetchPatientData();
+        patientId = patient?.patientId;
+      }
+  
+      if (!patientId) {
+        throw new Error("Patient data not available.");
+      }
+
+
+      const response = await fetch(`http://localhost:8081/medical-records/medical-records/${patientId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const recordsWithDoctorNames = await Promise.all(
+          data.map(async (record) => ({
+            ...record,
+            doctorName: await fetchDoctorName(record.doctor_Id),
+          }))
+        );
+        setMedicalRecords(recordsWithDoctorNames);
+        setMedicalFetchStatus({ loading: false, error: null });
+      } else if (response.status === 204) {
+        setMedicalRecords([]);
+        setMedicalFetchStatus({ loading: false, error:null});
+      } else {
+        throw new Error("Failed to fetch medical records.");
+      }
+    } catch (err) {
+      setMedicalFetchStatus({ loading: false, error: err.message });
+    }
+  };
+
+  // const fetchMedicalRecords = async () => {
+  //   setMedicalFetchStatus({ loading: true, error: null });
+  //   try {
+  //     // Fetch patient data if userId is available
+  //     let patientId = patientData?.patientId;
+  //     if (!patientId && userId) {
+  //       const patient = await fetchPatientData();
+  //       patientId = patient?.patientId;
+  //     }
+  
+  //     if (!patientId) {
+  //       throw new Error("Patient data not available.");
+  //     }
+  
+  //     const response = await fetch(`http://localhost:8081/medical-records/medical-records/${patientId}`, {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       const recordsWithDoctorNames = await Promise.all(
+  //         data.map(async (record) => ({
+  //           ...record,
+  //           doctorName: await fetchDoctorName(record.doctor_Id),
+  //         }))
+  //       );
+  //       setMedicalRecords(recordsWithDoctorNames);
+  //       setMedicalFetchStatus({ loading: false, error: null });
+  //     } else if (response.status === 204) {
+  //       setMedicalRecords([]);
+  //       setMedicalFetchStatus({ loading: false, error: null });
+  //     } else {
+  //       throw new Error("Failed to fetch medical records.");
+  //     }
+  //   } catch (err) {
+  //     setMedicalFetchStatus({ loading: false, error: err.message });
+  //   }
+  // };
+
+  // Fetch doctor name by doctor ID
+  const fetchDoctorName = async (doctorId) => {
+    try {
+      const response = await fetch(`http://localhost:8082/doctors/ByDoc/${doctorId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.firstname;
+      }
+      throw new Error("Failed to fetch doctor name.");
+    } catch (err) {
+      return "Unknown Doctor";
+    }
+  };
+
+  // Check authentication and fetch user data on mount
   useEffect(() => {
-    console.log("Token:", token);
-    console.log("UserId:", userId);
     if (!token) {
       navigate("/login");
       return;
     }
-
     if (!userId) {
       fetchUserData();
     }
   }, [userId, token, navigate]);
+
+  // Handler to book an appointment
   const handleBookAppointment = () => {
     if (!patientData) {
       fetchPatientData().then(() => {
@@ -752,11 +931,13 @@ export default function Profile() {
     }
   };
 
+  // Handler to view patient data
   const handleViewPatientData = () => {
     setCurrentView("patientData");
     if (!patientData) fetchPatientData();
   };
 
+  // Handler to update patient data
   const handleUpdatePatientData = () => {
     if (!patientData) {
       fetchPatientData().then(() => {
@@ -789,23 +970,26 @@ export default function Profile() {
     }
   };
 
+  // Handler for form input changes
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setUpdateFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handler to submit updated patient data
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     setUpdateStatus({ loading: true, success: null, error: null });
+
     const { patientId, dateOfBirth, ...updateData } = updateFormData;
-    updateData.date_of_birth = updateFormData.date_of_birth;
+    updateData.dateOfBirth = updateFormData.date_of_birth;
 
     try {
       const response = await fetch(`http://localhost:8083/pateints/update/${patientData.patientId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(updateData),
       });
@@ -815,41 +999,62 @@ export default function Profile() {
         setPatientData({ ...patientData, ...updateData, dateOfBirth: updateData.date_of_birth });
         setCurrentView("patientData");
       } else {
-        throw new Error("Failed to update patient data");
+        throw new Error("Failed to update patient data.");
       }
     } catch (err) {
       setUpdateStatus({ loading: false, success: null, error: err.message });
     }
   };
 
+  // Handler to view medical records
   const handleViewMedicalData = () => {
     setCurrentView("medicalData");
     setSelectedRecord(null);
-    if (medicalRecords.length === 0 && !medicalFetchStatus.error) fetchMedicalRecords();
+    // if (medicalRecords.length === 0 && !medicalFetchStatus.error) fetchMedicalRecords();
+    fetchMedicalRecords();
   };
 
+  // Handler to generate QR code
   const handleGenerateQR = async () => {
-    if (!patientData) {
-      try {
-        await fetchPatientData();
-      } catch (err) {
-        setQrCodeStatus({ loading: false, error: "Failed to fetch patient data. Please try again." });
-        setCurrentView("qrCode");
-        return;
-      }
-    }
-    if (!patientData || !patientData.patientId) {
-      setQrCodeStatus({ loading: false, error: "Patient data not available. Please try again." });
-      setCurrentView("qrCode");
-      return;
-    }
+    // if (!patientData) {
+    //   try {
+    //     await fetchPatientData();
+    //   } catch (err) {
+    //     setQrCodeStatus({ loading: false, error: "Failed to fetch patient data. Please try again." });
+    //     setCurrentView("qrCode");
+    //     return;
+    //   }
+    // }
+
+    // if (!patientData || !patientData.patientId) {
+    //   setQrCodeStatus({ loading: false, error: "Patient data not available. Please try again." });
+    //   setCurrentView("qrCode");
+    //   return;
+    // }
+
     setQrCodeStatus({ loading: true, error: null });
     setCurrentView("qrCode");
+
     try {
-      const response = await fetch(`http://localhost:8085/qrcode/generate/${patientData.patientId}`, {
+
+      let patientId = patientData?.patientId;
+      if (!patientId && userId) {
+        const patient = await fetchPatientData();
+        patientId = patient?.patientId;
+      }
+  
+      if (!patientId) {
+        throw new Error("Patient data not available.");
+      }
+
+      const response = await fetch(`http://localhost:8085/qrcode/generate/${patientId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
+
       if (response.ok) {
         const qrCodeBase64 = await response.text();
         if (!qrCodeBase64 || !qrCodeBase64.startsWith("data:image/png;base64,")) {
@@ -858,21 +1063,24 @@ export default function Profile() {
         setQrCodeData(qrCodeBase64);
         setQrCodeStatus({ loading: false, error: null });
       } else {
-        throw new Error("Failed to generate QR code");
+        throw new Error("Failed to generate QR code.");
       }
     } catch (err) {
       setQrCodeStatus({ loading: false, error: err.message });
     }
   };
 
+  // Handler to return to homepage
   const handleBackToHome = () => {
     navigate("/");
   };
 
+  // Handler to show help section
   const handleHelp = () => {
     setCurrentView("help");
   };
 
+  // Handler to log out
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
@@ -881,14 +1089,17 @@ export default function Profile() {
     navigate("/login");
   };
 
+  // Handler to view a specific medical record
   const handleViewRecord = (record) => {
     setSelectedRecord(record);
   };
 
+  // Handler to close a medical record view
   const handleCloseRecord = () => {
     setSelectedRecord(null);
   };
 
+  // Handler to save QR code to device
   const handleSaveToDevice = () => {
     if (!qrCodeData) {
       setQrCodeStatus({ loading: false, error: "No QR code data available to download." });
@@ -902,11 +1113,13 @@ export default function Profile() {
     document.body.removeChild(link);
   };
 
+  // Handler to share QR code
   const handleShareQR = async () => {
     if (!qrCodeData) {
       setQrCodeStatus({ loading: false, error: "No QR code data available to share." });
       return;
     }
+
     try {
       if (navigator.share) {
         const response = await fetch(qrCodeData);
@@ -925,75 +1138,12 @@ export default function Profile() {
     }
   };
 
-  const fetchPatientData = async () => {
-    setFetchStatus({ loading: true, error: null });
-    try {
-      const response = await fetch(`http://localhost:8083/pateints/patient/byUserId/${userId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPatientData(data);
-        setFetchStatus({ loading: false, error: null });
-      } else {
-        throw new Error("Failed to fetch patient data");
-      }
-    } catch (err) {
-      setFetchStatus({ loading: false, error: err.message });
-      setShowPatientDataError(true);
-    }
-  };
-
-  const fetchMedicalRecords = async () => {
-    if (!patientData) await fetchPatientData();
-    if (!patientData) return;
-    setMedicalFetchStatus({ loading: true, error: null });
-    try {
-      const response = await fetch(`http://localhost:8081/medical-records/medical-records/${patientData.patientId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const recordsWithDoctorNames = await Promise.all(
-          data.map(async (record) => {
-            const doctorName = await fetchDoctorName(record.doctor_Id);
-            return { ...record, doctorName };
-          })
-        );
-        setMedicalRecords(recordsWithDoctorNames);
-        setMedicalFetchStatus({ loading: false, error: null });
-      } else if (response.status === 204) {
-        setMedicalRecords([]);
-        setMedicalFetchStatus({ loading: false, error: "No medical records found." });
-      } else {
-        throw new Error("Failed to fetch medical records");
-      }
-    } catch (err) {
-      setMedicalFetchStatus({ loading: false, error: err.message });
-    }
-  };
-
-  const fetchDoctorName = async (doctorId) => {
-    try {
-      const response = await fetch(`http://localhost:8082/doctors/ByDoc/${doctorId}`, {
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data.firstname;
-      }
-      throw new Error("Failed to fetch doctor name");
-    } catch (err) {
-      return "Unknown Doctor";
-    }
-  };
-
+  // Render content based on current view
   const renderContent = () => {
     if (!userId && fetchStatus.loading) {
       return <p className="text-center text-gray-500">Loading profile...</p>;
     }
+
     if (fetchStatus.error) {
       return <p className="text-center text-red-500">{fetchStatus.error}</p>;
     }
@@ -1017,9 +1167,14 @@ export default function Profile() {
             />
           </motion.div>
         );
+
       case "patientData":
-        if (fetchStatus.loading) return <p className="text-center text-gray-500">Loading...</p>;
-        if (fetchStatus.error && showPatientDataError) return <p className="text-center text-red-500">{fetchStatus.error}</p>;
+        if (fetchStatus.loading) {
+          return <p className="text-center text-gray-500">Loading...</p>;
+        }
+        if (fetchStatus.error && showPatientDataError) {
+          return <p className="text-center text-red-500">{fetchStatus.error}</p>;
+        }
         if (patientData) {
           return (
             <motion.div
@@ -1030,18 +1185,33 @@ export default function Profile() {
             >
               <h3 className="text-2xl text-teal-600 font-semibold mb-4">Patient Information</h3>
               <div className="space-y-3 text-gray-700">
-                <p><strong>First Name:</strong> {patientData.firstname}</p>
-                <p><strong>Last Name:</strong> {patientData.lastname}</p>
-                <p><strong>Email:</strong> {patientData.email}</p>
-                <p><strong>Phone:</strong> {patientData.phone}</p>
-                <p><strong>Date of Birth:</strong> {patientData.dateOfBirth}</p>
-                <p><strong>Address:</strong> {patientData.address}</p>
-                <p><strong>Gender:</strong> {patientData.gender}</p>
+                <p>
+                  <strong>First Name:</strong> {patientData.firstname}
+                </p>
+                <p>
+                  <strong>Last Name:</strong> {patientData.lastname}
+                </p>
+                <p>
+                  <strong>Email:</strong> {patientData.email}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {patientData.phone}
+                </p>
+                <p>
+                  <strong>Date of Birth:</strong> {patientData.dateOfBirth}
+                </p>
+                <p>
+                  <strong>Address:</strong> {patientData.address}
+                </p>
+                <p>
+                  <strong>Gender:</strong> {patientData.gender}
+                </p>
               </div>
             </motion.div>
           );
         }
         return <p className="text-center text-gray-500">Click "View Patient Data" to load your information.</p>;
+
       case "updatePatientData":
         if (!updateFormData) {
           return <p className="text-center text-gray-500">Loading patient data for update...</p>;
@@ -1161,9 +1331,14 @@ export default function Profile() {
             </form>
           </motion.div>
         );
+
       case "medicalData":
-        if (medicalFetchStatus.loading) return <p className="text-center text-gray-500">Loading medical records...</p>;
-        if (medicalFetchStatus.error) return <p className="text-center text-red-500">{medicalFetchStatus.error}</p>;
+        if (medicalFetchStatus.loading) {
+          return <p className="text-center text-gray-500">Loading medical records...</p>;
+        }
+        if (medicalFetchStatus.error) {
+          return <p className="text-center text-red-500">{medicalFetchStatus.error}</p>;
+        }
         if (medicalRecords.length === 0) {
           return (
             <motion.div
@@ -1196,9 +1371,15 @@ export default function Profile() {
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-gray-600"><strong>Record ID:</strong> {record.id}</p>
-                      <p className="text-gray-600"><strong>Date:</strong> {new Date(record.createdAt).toLocaleDateString()}</p>
-                      <p className="text-gray-600"><strong>Doctor:</strong> {record.doctorName}</p>
+                      <p className="text-gray-600">
+                        <strong>Record ID:</strong> {record.id}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong>Date:</strong> {new Date(record.createdAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong>Doctor:</strong> {record.doctorName}
+                      </p>
                     </div>
                     <motion.button
                       onClick={() => handleViewRecord(record)}
@@ -1221,24 +1402,36 @@ export default function Profile() {
               >
                 <h4 className="text-xl text-teal-600 font-semibold mb-4">Medical Record Details</h4>
                 <div className="space-y-2 text-gray-700">
-                  <p><strong>Disease:</strong> {selectedRecord.disease?.name || "N/A"}</p>
-                  <p><strong>Diagnosis:</strong> {selectedRecord.diagnosticData || "N/A"}</p>
-                  <p><strong>Treatment:</strong> {selectedRecord.treatments || "N/A"}</p>
-                  <p><strong>Date:</strong> {new Date(selectedRecord.createdAt).toLocaleDateString()}</p>
-                  <p><strong>Doctor:</strong> {selectedRecord.doctorName || "N/A"}</p>
-                  <p><strong>Report:</strong>{" "}
-              {selectedRecord.reportUrl ? (
-                <a
-                  href={`http://localhost:8081${selectedRecord.reportUrl}`} // Full URL
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-500 hover:underline"
-                >
-                  View Report
-                </a>
-              ) : (
-                "N/A"
-              )}</p>
+                  <p>
+                    <strong>Disease:</strong> {selectedRecord.disease?.name || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Diagnosis:</strong> {selectedRecord.diagnosticData || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Treatment:</strong> {selectedRecord.treatments || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Date:</strong> {new Date(selectedRecord.createdAt).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Doctor:</strong> {selectedRecord.doctorName || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Report:</strong>{" "}
+                    {selectedRecord.reportUrl ? (
+                      <a
+                        href={`http://localhost:8081${selectedRecord.reportUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-teal-500 hover:underline"
+                      >
+                        View Report
+                      </a>
+                    ) : (
+                      "N/A"
+                    )}
+                  </p>
                 </div>
                 <motion.button
                   onClick={handleCloseRecord}
@@ -1252,6 +1445,7 @@ export default function Profile() {
             )}
           </motion.div>
         );
+
       case "qrCode":
         return (
           <motion.div
@@ -1270,7 +1464,11 @@ export default function Profile() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <img src={qrCodeData} alt="Patient QR Code" className="w-64 h-64 mx-auto rounded-lg shadow-sm" />
+                <img
+                  src={qrCodeData}
+                  alt="Patient QR Code"
+                  className="w-64 h-64 mx-auto rounded-lg shadow-sm"
+                />
                 <p className="text-center text-gray-600 mt-4">Scan to access your patient information.</p>
                 <div className="mt-4 flex space-x-4 justify-center">
                   <motion.button
@@ -1292,12 +1490,14 @@ export default function Profile() {
                 </div>
               </motion.div>
             ) : (
-              !qrCodeStatus.loading && !qrCodeStatus.error && (
+              !qrCodeStatus.loading &&
+              !qrCodeStatus.error && (
                 <p className="text-center text-gray-500">Click "Generate QR" to create your QR code.</p>
               )
             )}
           </motion.div>
         );
+
       case "help":
         return (
           <motion.div
@@ -1307,16 +1507,25 @@ export default function Profile() {
             transition={{ duration: 0.5 }}
           >
             <h3 className="text-2xl text-teal-600 font-semibold mb-4">Help & Support</h3>
-            <p className="text-gray-500">Need assistance? Contact us at <a href="mailto:support@hospital.com" className="text-teal-500 hover:underline">support@hospital.com</a>.</p>
+            <p className="text-gray-500">
+              Need assistance? Contact us at{" "}
+              <a href="mailto:support@hospital.com" className="text-teal-500 hover:underline">
+                support@hospital.com
+              </a>
+              .
+            </p>
           </motion.div>
         );
+
       default:
         return null;
     }
   };
 
+  // Main render
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 font-sans md:flex-row">
+      {/* Sidebar */}
       <motion.div
         className="flex flex-col bg-white shadow-xl rounded-b-3xl md:rounded-r-3xl md:w-1/4 p-6 border-r border-gray-100"
         initial={{ x: -100, opacity: 0 }}
@@ -1324,14 +1533,16 @@ export default function Profile() {
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <motion.img
-          src={profileimg}
+          src={profileImg}
           alt="Profile Picture"
           className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-teal-200 mx-auto mb-4 shadow-sm"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.5 }}
         />
-        <h2 className="text-xl font-semibold text-teal-600 text-center mb-6">{username || "Patient"}</h2>
+        <h2 className="text-xl font-semibold text-teal-600 text-center mb-6">
+          {username || "Patient"}
+        </h2>
         <div className="space-y-4">
           {[
             { icon: FaUser, text: "View Patient Data", onClick: handleViewPatientData },
@@ -1367,6 +1578,7 @@ export default function Profile() {
         </motion.button>
       </motion.div>
 
+      {/* Main Content */}
       <motion.div
         className="flex-1 p-6 md:p-8 bg-gradient-to-br from-blue-50 to-gray-50 rounded-t-3xl md:rounded-l-3xl overflow-y-auto"
         initial={{ opacity: 0, x: 100 }}
