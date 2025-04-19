@@ -9,7 +9,7 @@ export default function BookAppointment() {
 
   const [formData, setFormData] = useState({
     patientId: initialPatientId || '',
-    doctor: '',
+    doctorId: '',
     date: '',
     time: '',
     reason: '',
@@ -131,7 +131,7 @@ export default function BookAppointment() {
     try {
       const appointmentData = {
         patientID: formData.patientId,
-        docname: formData.doctor,
+        doctorID: formData.doctorId,
         appoinment_Date: formData.date,  // Corrected to match backend
         appoinment_Time: `${formData.time}:00`,  // Add seconds to match HH:mm:ss
         reason: formData.reason,
@@ -154,7 +154,7 @@ export default function BookAppointment() {
         });
         setFormData({ 
           patientId: formData.patientId,
-          doctor: '', 
+          doctorId: '', 
           date: '', 
           time: '', 
           reason: '' 
@@ -198,7 +198,7 @@ export default function BookAppointment() {
             className="text-blue-100 text-sm sm:text-base mt-2"
             variants={formVariants}
           >
-            HealthCare Hub - Compassionate Care, Expert Solutions
+            Unity Health Care - Compassionate Care, Expert Solutions
           </motion.p>
         </div>
 
@@ -228,8 +228,8 @@ export default function BookAppointment() {
                 Physician <span className="text-red-500">*</span>
               </label>
               <select
-                name="doctor"
-                value={formData.doctor}
+                name="doctorId"
+                value={formData.doctorId}
                 onChange={handleChange}
                 className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-700 bg-gray-50"
                 required
@@ -238,7 +238,7 @@ export default function BookAppointment() {
                 {doctors.map((doctor) => (
                   <option 
                     key={doctor.doctor_Id} 
-                    value={`${doctor.firstname} ${doctor.lastname}`}
+                    value={doctor.doctor_Id} 
                   >
                     Dr. {doctor.firstname} {doctor.lastname} - {doctor.specialization || doctor.specilization || 'N/A'}
                   </option>

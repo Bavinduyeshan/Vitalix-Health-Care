@@ -148,10 +148,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-blue-600/60 rounded-3xl"></div>
         <motion.div className="flex flex-col justify-center p-6 sm:p-8 md:p-10 w-full md:w-1/2 relative space-y-6 z-10" variants={textVariants}>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-extrabold leading-tight tracking-tight">
-            Welcome to <span className="text-blue-300">HealthCare Hub</span>
+            Welcome to <span className="text-blue-300">Unity Health Care</span>
           </h1>
           <p className="text-gray-100 text-base sm:text-lg md:text-xl leading-relaxed">
-            At HealthCare Hub, we provide world-class medical care with compassion and innovation. Access your health records, book appointments, and connect with our expert doctors—all in one place.
+            At Unity Health Care, we provide world-class medical care with compassion and innovation. Access your health records, book appointments, and connect with our expert doctors—all in one place.
           </p>
           <motion.div className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 md:mt-8" variants={buttonVariants}>
             

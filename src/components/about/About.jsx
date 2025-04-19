@@ -150,6 +150,8 @@ import { motion } from 'framer-motion';
 import hospital1 from '../../assets/hosimg.jpeg'; // Replace with your image paths
 import hospital2 from '../../assets/hosimg.jpeg';
 import hospital3 from '../../assets/hosimg.jpeg';
+import Footer from '../footer/Footer';
+
 
 // Animation variants
 const fadeInLeft = {
@@ -401,10 +403,13 @@ export default function About() {
             >
               Contact Us
             </Button>
+            
           </motion.div>
         </Box>
       </Container>
+      
     </Box>
+    
   );
 }
 

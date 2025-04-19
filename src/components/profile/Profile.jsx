@@ -907,16 +907,118 @@ export default function Profile() {
     }
   };
 
-  // Check authentication and fetch user data on mount
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
+  const fetchUpcomingAppointments = async () => {
+    if (!patientData?.patientId) {
+      console.warn("No patientId available for fetching appointments");
       return;
     }
-    if (!userId) {
-      fetchUserData();
+    try {
+      const response = await fetch(`http://localhost:8086/appoinments/GET/${patientData.patientId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (response.ok) {
+        const contentType = response.headers.get("Content-Type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          console.log("Upcoming appointments response:", data); // Debug log
+  
+          let nextAppointment = null;
+  
+          // Check if data is an array or a single object
+          if (Array.isArray(data)) {
+            // If it's an array, find the next future appointment
+            nextAppointment = data.find(appointment => new Date(appointment.appoinment_Date) > new Date());
+          } else if (data && typeof data === 'object') {
+            // If it's a single object, check if it's a future appointment
+            if (new Date(data.appoinment_Date) > new Date()) {
+              nextAppointment = data;
+            }
+          }
+  
+          // If we found an appointment, fetch the doctor's name
+          if (nextAppointment && nextAppointment.doctorID) {
+            const doctorName = await fetchDoctorName(nextAppointment.doctorID);
+            nextAppointment.doctorName = doctorName;
+          }
+  
+          setPatientData((prev) => ({ ...prev, upcomingAppointment: nextAppointment || null }));
+        } else {
+          const text = await response.text();
+          console.warn("Non-JSON response from appointments API:", text);
+          if (text.includes("not found")) {
+            setPatientData((prev) => ({ ...prev, upcomingAppointment: null }));
+          } else {
+            throw new Error(`Unexpected response format: ${text}`);
+          }
+        }
+      } else if (response.status === 404) {
+        console.log("No appointments found for patient");
+        setPatientData((prev) => ({ ...prev, upcomingAppointment: null }));
+      } else {
+        throw new Error(`Failed to fetch appointments: ${response.status}`);
+      }
+    } catch (err) {
+      console.error("Failed to fetch appointments:", err);
+      setPatientData((prev) => ({ ...prev, upcomingAppointment: null }));
     }
-  }, [userId, token, navigate]);
+  };
+  // Check authentication and fetch user data on mount
+  // useEffect(() => {
+  //   if (!token) {
+  //     navigate("/login");
+  //     return;
+  //   }
+  //   if (!userId) {
+  //     fetchUserData();
+  //   }
+  //   if (patientData?.patientId) {
+  //     fetchUpcomingAppointments();
+  //     fetchMedicalRecords(); // Ensure medical records are fetched
+  //   } else {
+  //     fetchPatientData().then(() => {
+  //       if (patientData?.patientId) {
+  //         fetchUpcomingAppointments();
+  //         fetchMedicalRecords();
+  //       }
+  //     });
+  //   }
+  // }, [userId, token, navigate]);
+  useEffect(() => {
+    const fetchAllData = async () => {
+      // Step 1: Check for token and userId
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+  
+      if (!userId) {
+        await fetchUserData();
+      }
+  
+      // Step 2: Fetch patient data if not already available
+      if (!patientData) {
+        const patient = await fetchPatientData();
+        if (!patient?.patientId) {
+          console.error("No patientId found after fetching patient data");
+          return;
+        }
+      }
+  
+      // Step 3: Fetch upcoming appointments and medical records
+      if (patientData?.patientId) {
+        await Promise.all([
+          fetchUpcomingAppointments(),
+          fetchMedicalRecords(),
+        ]);
+      }
+    };
+  
+    fetchAllData();
+  }, [userId, token, navigate, patientData?.patientId]);
 
   // Handler to book an appointment
   const handleBookAppointment = () => {
@@ -1152,19 +1254,118 @@ export default function Profile() {
       case "dashboard":
         return (
           <motion.div
-            className="flex flex-col h-full justify-center items-center bg-gradient-to-b from-blue-50 to-white rounded-lg p-6 shadow-lg"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-white rounded-lg p-6 md:p-8 relative"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <h2 className="text-3xl text-center text-teal-600 font-semibold mb-6 tracking-tight">
-              Welcome, {username || "Patient"}!
-            </h2>
-            <img
-              src={hospitalIllustration}
-              alt="Hospital Illustration"
-              className="w-full max-w-md rounded-lg shadow-md transition-transform duration-300 hover:scale-105"
-            />
+            {/* Hero Section */}
+            <motion.div
+              className="bg-white rounded-xl shadow-lg p-6 mb-6 border-t-4 border-teal-400 flex flex-col md:flex-row items-center justify-between"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <div className="text-center md:text-left mb-4 md:mb-0">
+                <h2 className="text-3xl text-teal-600 font-semibold mb-2 tracking-tight">
+                  Welcome, {username ? `Mr/Mrs. ${username}` : "Patient"}!
+                </h2>
+                <p className="text-gray-600">
+                  Your healthcare hub. Check your upcoming appointments, recent records, or manage your profile.
+                </p>
+              </div>
+              <motion.img
+                src={hospitalIllustration}
+                alt="Hospital Illustration"
+                className="w-48 md:w-64 rounded-lg shadow-md transition-transform duration-300 hover:scale-105"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              />
+            </motion.div>
+      
+          {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Upcoming Appointment Card */}
+        <motion.div
+          className="bg-white p-4 w- rounded-xl shadow-md border-l-4 border-teal-400 hover:shadow-lg transition-all duration-300"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <div className="flex items-center mb-3">
+            <FaCalendarPlus className="text-teal-500 mr-2" size={20} />
+            <h3 className="text-lg font-semibold text-teal-600">Upcoming Appointment</h3>
+          </div>
+          <p className="text-gray-600 mb-2">
+            {patientData?.upcomingAppointment ? (
+              <>
+                Next: {new Date(patientData.upcomingAppointment.appoinment_Date).toLocaleDateString()}
+                {patientData.upcomingAppointment.appoinment_Time && ` at ${patientData.upcomingAppointment.appoinment_Time}`}
+                {patientData.upcomingAppointment.doctorName && ` with Dr. ${patientData.upcomingAppointment.doctorName}`}
+              </>
+            ) : (
+              <>
+                No upcoming appointments.{" "}
+                <button
+                  onClick={handleBookAppointment}
+                  className="text-teal-500 hover:underline"
+                >
+                  Book one now!
+                </button>
+              </>
+            )}
+          </p>
+        </motion.div>
+      
+              {/* Recent Medical Record Card */}
+              <motion.div
+                className="bg-white p-4 rounded-xl shadow-md border-l-4 border-teal-400 hover:shadow-lg transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <div className="flex items-center mb-3">
+                  <FaFileMedical className="text-teal-500 mr-2" size={20} />
+                  <h3 className="text-lg font-semibold text-teal-600">Recent Medical Record</h3>
+                </div>
+                <p className="text-gray-600 mb-2">
+                  {medicalRecords.length > 0 ? (
+                    <>
+                      Last: {new Date(medicalRecords[0].createdAt).toLocaleDateString()}
+                      {medicalRecords[0].disease?.name && ` - ${medicalRecords[0].disease.name}`}
+                      {medicalRecords[0].doctorName && ` by Dr. ${medicalRecords[0].doctorName}`}
+                    </>
+                  ) : (
+                    "No medical records found."
+                  )}
+                </p>
+              </motion.div>
+      
+              {/* Profile Status Card */}
+              <motion.div
+                className="bg-white p-4 rounded-xl shadow-md border-l-4 border-teal-400 hover:shadow-lg transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
+                <div className="flex items-center mb-3">
+                  <FaUser className="text-teal-500 mr-2" size={20} />
+                  <h3 className="text-lg font-semibold text-teal-600">Profile Status</h3>
+                </div>
+                <p className="text-gray-600 mb-2">
+                  {patientData && patientData.firstname && patientData.email
+                    ? "Profile complete"
+                    : "Complete your profile to get started."}
+                </p>
+              </motion.div>
+            </div>
+      
+            {/* Decorative Background Element */}
+            <div className="absolute inset-0 -z-10 overflow-hidden">
+              <div className="w-96 h-96 bg-teal-100 rounded-full opacity-20 absolute -top-20 -left-40 blur-3xl" />
+              <div className="w-96 h-96 bg-blue-100 rounded-full opacity-20 absolute -bottom-20 -right-40 blur-3xl" />
+            </div>
           </motion.div>
         );
 
@@ -1541,7 +1742,7 @@ export default function Profile() {
           transition={{ duration: 0.5 }}
         />
         <h2 className="text-xl font-semibold text-teal-600 text-center mb-6">
-          {username || "Patient"}
+          Mr/Mrs.{username || "Patient"}
         </h2>
         <div className="space-y-4">
           {[
