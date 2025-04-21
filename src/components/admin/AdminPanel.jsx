@@ -154,7 +154,7 @@ export default function AdminDashboard() {
     setFetchStatus({ loading: true, error: null });
     try {
       const storedUsername = localStorage.getItem("username")?.split(" ")[0];
-      const response = await fetch(`http://localhost:8080/users/byUsername/${storedUsername}`, {
+      const response = await fetch(`http://localhost:8090/users/byUsername/${storedUsername}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
