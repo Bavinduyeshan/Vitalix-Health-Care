@@ -953,12 +953,64 @@ export default function AdminDashboard() {
         console.error("Error generating report:", error);
       });
   };
-  const generateAllPatientsReport = () =>
-    downloadReport(patients, "All_Patients_Report");
+  const generateAllPatientsReport = () =>{
+    const url = "http://localhost:8087/reportsP/report/all";
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.blob();
+        }
+        throw new Error("Failed to generate report");
+      })
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "All_Patient_Records_Report.pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch((error) => {
+        console.error("Error generating report:", error);
+      });
+  };
+    // downloadReport(patients, "All_Patients_Report");
   const generateAllAppointmentsReport = () =>
     downloadReport(appointments, "All_Appointments_Report");
-  const generateAllMedicalRecordsReport = () =>
-    downloadReport(medicalRecords, "All_Medical_Records_Report");
+  const generateAllMedicalRecordsReport = () =>{
+    const url = "http://localhost:8087/reportsM/report/all";
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.blob();
+        }
+        throw new Error("Failed to generate report");
+      })
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "All_medical_Records_Report.pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      })
+      .catch((error) => {
+        console.error("Error generating report:", error);
+      });
+  };
+    // downloadReport(medicalRecords, "All_Medical_Records_Report");
   const generateAllUsersReport = () => downloadReport(users, "All_Users_Report");
   const generateAllDiseasesReport = () =>
     downloadReport(diseases, "All_Diseases_Report");
