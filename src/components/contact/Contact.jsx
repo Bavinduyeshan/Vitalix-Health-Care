@@ -231,12 +231,15 @@ export default function Contact() {
 
   return (
     <Box
+
       sx={{
         background: 'linear-gradient(180deg, #e3f2fd 0%, #ffffff 100%)',
         minHeight: '100vh',
         py: 8,
       }}
     >
+      {/* Hidden access key */}
+  <input type="hidden" name="access_key" value="d341bf3d-d8fa-4822-953d-ac9ae66592a1" />
       <Container maxWidth="lg">
         <Grid container spacing={4} sx={{ alignItems: 'center', py: 6 }}>
           {/* Left Side - Contact Form */}
@@ -258,7 +261,7 @@ export default function Contact() {
                 component={motion.div}
                 variants={fadeInLeft}
               >
-                Contact <span style={{ color: '#3b82f6' }}>Us</span>
+                Contact <span style={{ color: '#373e29' }}>Us</span>
               </Typography>
               <Typography
                 variant="body1"
@@ -274,7 +277,9 @@ export default function Contact() {
                 We’re here to assist you. Fill out the form below, and our team will respond promptly.
               </Typography>
               <Box
-                component="form"
+                // component="form"
+                // action="https://api.web3forms.com/submit"
+                // method="POST"
                 onSubmit={handleSubmit}
                 sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
               >
@@ -422,7 +427,7 @@ export default function Contact() {
               <Divider sx={{ mb: 4, borderColor: '#e3f2fd' }} />
               <Box
                 component={motion.iframe}
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3151.835434509374!2d144.9537353153167!3d-37.81627927975195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad642af0f0f3e1d%3A0x5045675218ce7e0!2sMelbourne%20VIC%2C%20Australia!5e0!3m2!1sen!2sus!4v1697041234567!5m2!1sen!2sus"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3967.8910441557905!2d80.51499857480144!3d6.009696143975596!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae140eba2de2217%3A0xfe72e591d6dc9e7b!2sMalimbada%20Junction!5e0!3m2!1sen!2slk!4v1745777875972!5m2!1sen!2slk"
                 title="Hospital Location"
                 sx={{
                   width: '100%',

@@ -143,48 +143,6 @@ export default function Profile() {
     }
   };
 
-  // const fetchMedicalRecords = async () => {
-  //   setMedicalFetchStatus({ loading: true, error: null });
-  //   try {
-  //     // Fetch patient data if userId is available
-  //     let patientId = patientData?.patientId;
-  //     if (!patientId && userId) {
-  //       const patient = await fetchPatientData();
-  //       patientId = patient?.patientId;
-  //     }
-  
-  //     if (!patientId) {
-  //       throw new Error("Patient data not available.");
-  //     }
-  
-  //     const response = await fetch(`http://localhost:8081/medical-records/medical-records/${patientId}`, {
-  //       method: "GET",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       const recordsWithDoctorNames = await Promise.all(
-  //         data.map(async (record) => ({
-  //           ...record,
-  //           doctorName: await fetchDoctorName(record.doctor_Id),
-  //         }))
-  //       );
-  //       setMedicalRecords(recordsWithDoctorNames);
-  //       setMedicalFetchStatus({ loading: false, error: null });
-  //     } else if (response.status === 204) {
-  //       setMedicalRecords([]);
-  //       setMedicalFetchStatus({ loading: false, error: null });
-  //     } else {
-  //       throw new Error("Failed to fetch medical records.");
-  //     }
-  //   } catch (err) {
-  //     setMedicalFetchStatus({ loading: false, error: err.message });
-  //   }
-  // };
 
   // Fetch doctor name by doctor ID
   const fetchDoctorName = async (doctorId) => {
@@ -1086,6 +1044,9 @@ export default function Profile() {
         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
       >
         {renderContent()}
+
+
+        
       </motion.div>
     </div>
   );
