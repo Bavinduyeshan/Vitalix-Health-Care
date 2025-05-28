@@ -524,8 +524,8 @@ export default function Profile() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="text-center md:text-left mb-4 md:mb-0">
-                <h2 className="text-3xl text-teal-600 font-semibold mb-2 tracking-tight">
-                  Welcome, {username ? `Mr/Mrs. ${username}` : "Patient"}!
+                <h2 className="text-3xl text-teal-600 font-semibold mb-2 tracking-tight ">
+                  Welcome, {username ? ` ${username}` : "Patient"}!
                 </h2>
                 <p className="text-gray-600">
                   Your healthcare hub. Check your upcoming appointments, recent records, or manage your profile.
@@ -860,7 +860,7 @@ export default function Profile() {
               >
                 <h4 className="text-xl text-teal-600 font-semibold mb-4">Medical Record Details</h4>
                 <div className="space-y-2 text-gray-700">
-                  <p>
+                  <p >
                     <strong>Disease:</strong> {selectedRecord.disease?.name || "N/A"}
                   </p>
                   <p>
@@ -999,7 +999,7 @@ export default function Profile() {
           transition={{ duration: 0.5 }}
         />
         <h2 className="text-xl font-semibold text-teal-600 text-center mb-6">
-          Mr/Mrs.{username || "Patient"}
+         {username || "Patient"}
         </h2>
         <div className="space-y-4">
           {[

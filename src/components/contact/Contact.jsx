@@ -370,7 +370,7 @@ export default function Contact() {
             </div>
             <hr className="border-blue-100 mb-6" />
             <motion.iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3967.8910441557905!2d80.51499857480144!3d6.009696143975596!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae140eba2de2217%3A0xfe72e591d6dc9e7b!2sMalimbada%20Junction!5e0!3m2!1sen!2slk!4v1745777875972!5m2!1sen!2slk"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63492.95583422904!2d80.50954810278847!3d5.951990672256694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae138d151937cd9%3A0x1d711f45897009a3!2sMatara!5e0!3m2!1sen!2slk!4v1748362595320!5m2!1sen!2slk"
               title="Hospital Location"
               className="w-full max-w-md h-72 rounded-lg border-0"
               variants={fadeInRight}

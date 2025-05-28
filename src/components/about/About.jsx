@@ -199,7 +199,7 @@ export default function About() {
           </Grid>
         </Grid>
 
-        {/* Additional Section: Our Mission */}
+        {/*  Our Mission sefv*/}
         <Box sx={{ mt: 8, textAlign: 'center' }}>
           <motion.div
             initial="hidden"
