@@ -1,46 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import { motion, useAnimation } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaSpinner } from 'react-icons/fa';
-import { useInView } from 'react-intersection-observer';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import Footer from '../footer/Footer';
-import qrImage from '../../assets/qrimg2.jpeg';
-import hosimg from '../../assets/hosimg.jpeg';
+import React, { useEffect, useState } from "react";
+import { motion, useAnimation, AnimatePresence } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { FaSpinner, FaUserMd, FaCalendarAlt, FaFileMedical, FaQrcode } from "react-icons/fa";
+import { MdEmail, MdSchool, MdWork } from "react-icons/md";
+import { useInView } from "react-intersection-observer";
+import Footer from "../footer/Footer";
+import qrImage from "../../assets/qrimg2.jpeg";
+import hosimg from "../../assets/hosimg.jpeg";
+import docimg from "../../assets/doimage.webp";
 
 export default function Home() {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize AOS
-  useEffect(() => {
-    AOS.init({ duration: 1000, once: true });
+  // Animation controls
+  const heroControls = useAnimation();
+  const servicesControls = useAnimation();
+  const doctorsControls = useAnimation();
 
+  const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [servicesRef, servicesInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [doctorsRef, doctorsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
+
+  useEffect(() => {
+    if (heroInView) heroControls.start("visible");
+    if (servicesInView) servicesControls.start("visible");
+    if (doctorsInView) doctorsControls.start("visible");
+  }, [heroControls, servicesControls, doctorsControls, heroInView, servicesInView, doctorsInView]);
+
+  useEffect(() => {
     const fetchDoctors = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8082/doctors/getAll');
+        const response = await fetch("http://localhost:8082/doctors/getAll");
         if (!response.ok) {
-          throw new Error('Failed to fetch doctors');
+          throw new Error("Failed to fetch doctors");
         }
         const data = await response.json();
         const formattedDoctors = data.map((doctor) => ({
           id: doctor.doctor_Id,
           name: `${doctor.firstname} ${doctor.lastname}`,
-          specialty: doctor.specilization || 'General Practitioner',
+          specialty: doctor.specilization || "General Practitioner",
           description:
             doctor.description ||
             `Dr. ${doctor.lastname} is a dedicated professional with extensive experience in ${
-              doctor.specilization || 'healthcare'
+              doctor.specilization || "healthcare"
             }.`,
-          education: doctor.education || 'MD, Medical School',
-          experience: doctor.experience || 'Not specified',
-          contact: doctor.email || doctor.phonenumber || 'Not available',
+          education: doctor.education || "MD, Medical School",
+          experience: doctor.experience || "Not specified",
+          contact: doctor.email || doctor.phonenumber || "Not available",
         }));
         setDoctors(formattedDoctors);
         setLoading(false);
@@ -52,449 +64,500 @@ export default function Home() {
     fetchDoctors();
   }, []);
 
-  // Animation controls for scroll-triggered effects
-  const heroControls = useAnimation();
-  const servicesControls = useAnimation();
-  const doctorsControls = useAnimation();
+// VALID easing function
+const validEase = [0.6, 0.05, 0.01, 0.99]; // replaces invalid [-0.01]
 
-  const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.2 });
-  const [servicesRef, servicesInView] = useInView({ triggerOnce: true, threshold: 0.2 });
-  const [doctorsRef, doctorsInView] = useInView({ triggerOnce: true, threshold: 0.2 });
-
-  useEffect(() => {
-    if (heroInView) heroControls.start('visible');
-    if (servicesInView) servicesControls.start('visible');
-    if (doctorsInView) doctorsControls.start('visible');
-  }, [heroControls, servicesControls, doctorsControls, heroInView, servicesInView, doctorsInView]);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: 'easeOut', staggerChildren: 0.2 },
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.8,
+      ease: validEase,
+      staggerChildren: 0.2,
     },
-  };
+  },
+};
 
-  const textVariants = {
-    hidden: { opacity: 0, x: -100 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.8, ease: 'easeOut', bounce: 0.3 },
+const fadeUpVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: validEase,
     },
-  };
+  },
+};
 
-  const imageVariants = {
-    hidden: { opacity: 0, x: 100, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      scale: 1,
-      transition: { duration: 0.8, ease: 'easeOut', bounce: 0.3 },
+const fadeInVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.8,
+      ease: validEase,
     },
-  };
+  },
+};
 
-  const buttonVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: 'easeOut' },
+const scaleUpVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: validEase,
     },
-  };
+  },
+};
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 70, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.7, ease: 'easeOut', bounce: 0.4 },
+const cardVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.6,
+      ease: validEase,
     },
-  };
+  }),
+};
 
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.7, y: 100 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: 'easeOut', type: 'spring', stiffness: 100 },
+const modalVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: validEase,
     },
-    exit: { opacity: 0, scale: 0.7, y: 100, transition: { duration: 0.3, ease: 'easeIn' } },
-  };
+  },
+  exit: {
+    opacity: 0,
+    y: 50,
+    transition: {
+      duration: 0.3,
+      ease: "easeInOut",
+    },
+  },
+};
 
-  const spinnerVariants = {
-    animate: {
-      rotate: 360,
-      scale: [1, 1.2, 1],
-      transition: { repeat: Infinity, duration: 1.5, ease: 'easeInOut' },
+const spinnerVariants = {
+  animate: {
+    rotate: 360,
+    transition: {
+      repeat: Infinity,
+      duration: 1.5,
+      ease: "linear",
     },
-  };
+  },
+};
 
   const handleBookAppointment = () => {
     if (!token) {
-      navigate('/login');
+      navigate("/login");
     } else {
-      navigate('/profile');
+      navigate("/profile");
     }
   };
 
   return (
-    <motion.div
-      className="bg-gradient-to-b from-blue-50 to-white min-h-screen font-sans relative"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-    >
+    <div className="min-h-screen font-sans bg-gradient-to-b from-blue-50 to-white">
       {/* Hero Section */}
-      <motion.div
+      <motion.section
         ref={heroRef}
-        className="relative flex flex-col md:flex-row items-center justify-between min-h-[60vh] md:h-[80vh] p-6 sm:p-8 md:p-12 rounded-3xl shadow-2xl w-[95%] sm:w-[90%] max-w-7xl mx-auto mt-4 md:mt-8 overflow-hidden"
-        style={{
-          backgroundImage: `url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className="relative overflow-hidden  min-h-[100vh]"
         variants={containerVariants}
         initial="hidden"
         animate={heroControls}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-blue-600/60 rounded-3xl" />
-        <motion.div
-          className="flex flex-col justify-center p-6 sm:p-8 md:p-12 w-full md:w-1/2 relative space-y-6 z-10"
-          variants={textVariants}
-        >
-          <motion.h1
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-extrabold leading-tight tracking-tight"
-            data-aos="fade-right"
-          >
-            Welcome to <span className="text-blue-300">Vitalix Health Care</span>
-          </motion.h1>
-          <motion.p
-            className="text-gray-100 text-base sm:text-lg md:text-xl leading-relaxed"
-            data-aos="fade-right"
-            data-aos-delay="200"
-          >
-            At Vitalix Health Care, we provide world-class medical care with compassion and innovation. Access your health
-            records, book appointments, and connect with our expert doctors—all in one place.
-          </motion.p>
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-6 md:mt-8"
-            variants={buttonVariants}
-          >
-            <motion.button
-              className="bg-blue-500 text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300 w-full sm:w-auto"
-              whileHover={{ scale: 1.1, boxShadow: '0px 0px 15px rgba(0, 123, 255, 0.5)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleBookAppointment}
-              data-aos="fade-up"
-              data-aos-delay="400"
-            >
-              Book Appointment
-            </motion.button>
-            <Link to="/profile">
-              <motion.button
-                className="bg-transparent border-2 border-blue-300 text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-full shadow-lg hover:bg-blue-300 hover:text-blue-900 transition-all duration-300 w-full sm:w-auto"
-                whileHover={{ scale: 1.1, boxShadow: '0px 0px 15px rgba(0, 123, 255, 0.5)' }}
-                whileTap={{ scale: 0.95 }}
-                data-aos="fade-up"
-                data-aos-delay="600"
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-teal-800 opacity-95 " />
+        
+        {/* Floating circles */}
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-400 opacity-20 blur-xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [-50, 50, -50],
+            y: [0, 50, 0]
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-teal-400 opacity-20 blur-xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [50, -50, 50],
+            y: [0, -50, 0]
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <motion.div variants={fadeUpVariants}>
+              <motion.h1 
+                className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight mb-6  mt-24"
+                variants={fadeUpVariants}
               >
-                Generate QR
-              </motion.button>
-            </Link>
-          </motion.div>
-        </motion.div>
-        <motion.div
-          className="flex justify-center p-6 sm:p-8 md:p-12 w-full md:w-1/2 items-center relative z-10"
-          variants={imageVariants}
-        >
-          <motion.img
-            src={qrImage}
-            alt="Patient QR Code"
-            className="border-4 border-blue-200 h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 rounded-2xl shadow-xl object-cover"
-            whileHover={{ scale: 1.1, rotate: 5, boxShadow: '0px 0px 20px rgba(0, 123, 255, 0.4)' }}
-            transition={{ duration: 0.5 }}
-            data-aos="zoom-in"
-          />
-        </motion.div>
-      </motion.div>
+                Your Health, <span className="text-teal-300">Our Priority</span>
+              </motion.h1>
+              <motion.p 
+                className="text-lg sm:text-xl text-blue-100 mb-8 max-w-lg"
+                variants={fadeUpVariants}
+              >
+                At Vitalix Health Care, we combine cutting-edge technology with compassionate care to deliver exceptional healthcare experiences.
+              </motion.p>
+              <motion.div className="flex flex-col sm:flex-row gap-4" variants={fadeUpVariants}>
+                <motion.button
+                  className="px-8 py-3 bg-teal-400 hover:bg-teal-300 text-blue-900 font-semibold rounded-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+                  whileHover={{ y: -3, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleBookAppointment}
+                >
+                  <FaCalendarAlt />
+                  Book Appointment
+                </motion.button>
+                <Link to="/profile">
+                  <motion.button
+                    className="px-8 py-3 bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold rounded-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FaQrcode />
+                    Generate QR
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </motion.div>
+            
+            <motion.div 
+              className="flex justify-center"
+              variants={scaleUpVariants}
+            >
+              <div className="relative">
+                <motion.img
+                  src={qrImage}
+                  alt="Patient QR Code"
+                  className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl border-4 border-teal-300 shadow-2xl object-cover mt-24"
+                  whileHover={{ rotate: 2, scale: 1.03 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                />
+                <motion.div 
+                  className="absolute -bottom-6 -right-6 bg-white p-4 rounded-xl shadow-lg border-2 border-blue-100"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.5, type: "spring" }}
+                >
+                  <FaUserMd className="text-blue-600 text-3xl" />
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.section>
 
       {/* Services Section */}
-      <motion.div
+      <motion.section
         ref={servicesRef}
-        className="w-[95%] sm:w-[90%] max-w-7xl mx-auto mt-12 md:mt-20 py-8 md:py-16"
+        className="py-16 sm:py-24"
         variants={containerVariants}
         initial="hidden"
         animate={servicesControls}
       >
-        <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl text-blue-900 text-center font-bold mb-8 md:mb-12"
-          data-aos="fade-up"
-        >
-          Our Services
-        </motion.h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 px-4 sm:px-0">
-          <motion.div
-            className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:bg-blue-50"
-            variants={cardVariants}
-            whileHover={{ scale: 1.05, y: -10 }}
-            data-aos="fade-up"
-            data-aos-delay="100"
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-16"
+            variants={fadeUpVariants}
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-0 hover:opacity-50 transition-opacity duration-500" />
-            <div className="relative z-10">
+            <motion.h2 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4"
+              variants={fadeUpVariants}
+            >
+              Comprehensive <span className="text-blue-600">Healthcare</span> Services
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-gray-600 max-w-3xl mx-auto"
+              variants={fadeUpVariants}
+            >
+              We offer a wide range of medical services to meet all your healthcare needs with excellence and care.
+            </motion.p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Patient Registration",
+                description: "Quick and easy registration process to get you started with our healthcare services.",
+                link: "/register",
+                icon: <FaUserMd className="text-4xl text-blue-600" />,
+                color: "bg-blue-100"
+              },
+              {
+                title: "Appointment Booking",
+                description: "Schedule your visit with our specialists at your convenience.",
+                link: "/book-appointment",
+                icon: <FaCalendarAlt className="text-4xl text-teal-600" />,
+                color: "bg-teal-100"
+              },
+              {
+                title: "Medical Records",
+                description: "Access your health information securely anytime, anywhere.",
+                link: "/profile",
+                icon: <FaFileMedical className="text-4xl text-indigo-600" />,
+                color: "bg-indigo-100"
+              }
+            ].map((service, i) => (
               <motion.div
-                className="text-blue-600 mb-4"
-                whileHover={{ scale: 1.2, rotate: 15 }}
-                transition={{ duration: 0.3 }}
-              >
-                <svg className="h-12 w-12 sm:h-16 sm:w-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
-              </motion.div>
-              <h3 className="text-xl sm:text-2xl text-blue-900 font-semibold mb-3">Patient Registration</h3>
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                Sign up easily to start your healthcare journey with us.
-              </p>
-              <Link to="/register">
-                <motion.button
-                  className="mt-4 sm:mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Register Now
-                </motion.button>
-              </Link>
-            </div>
-          </motion.div>
-          <motion.div
-            className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:bg-blue-50"
-            variants={cardVariants}
-            whileHover={{ scale: 1.05, y: -10 }}
-            data-aos="fade-up"
-            data-aos-delay="200"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-0 hover:opacity-50 transition-opacity duration-500" />
-            <div className="relative z-10">
-              <motion.div
-                className="text-blue-600 mb-4"
-                whileHover={{ scale: 1.2, rotate: 15 }}
-                transition={{ duration: 0.3 }}
-              >
-                <svg className="h-12 w-12 sm:h-16 sm:w-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-                </svg>
-              </motion.div>
-              <h3 className="text-xl sm:text-2xl text-blue-900 font-semibold mb-3">Book Appointment</h3>
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                Schedule a visit with our expert doctors at your convenience.
-              </p>
-              <Link to="/book-appointment">
-                <motion.button
-                  className="mt-4 sm:mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Book Now
-                </motion.button>
-              </Link>
-            </div>
-          </motion.div>
-          <motion.div
-            className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:bg-blue-50"
-            variants={cardVariants}
-            whileHover={{ scale: 1.05, y: -10 }}
-            data-aos="fade-up"
-            data-aos-delay="300"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-0 hover:opacity-50 transition-opacity duration-500" />
-            <div className="relative z-10">
-              <motion.div
-                className="text-blue-600 mb-4"
-                whileHover={{ scale: 1.2, rotate: 15 }}
-                transition={{ duration: 0.3 }}
-              >
-                <svg className="h-12 w-12 sm:h-16 sm:w-16 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-1 14H5V8h14v10z" />
-                </svg>
-              </motion.div>
-              <h3 className="text-xl sm:text-2xl text-blue-900 font-semibold mb-3">View Medical Records</h3>
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                Access your health records anytime, anywhere.
-              </p>
-              <Link to="/profile">
-                <motion.button
-                  className="mt-4 sm:mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  View Records
-                </motion.button>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Doctors Section */}
-      <motion.div
-        ref={doctorsRef}
-        className="w-[95%] sm:w-[90%] max-w-7xl mx-auto mt-12 md:mt-20 mb-12 md:mb-20 py-8 md:py-16"
-        variants={containerVariants}
-        initial="hidden"
-        animate={doctorsControls}
-      >
-        <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl text-blue-900 text-center font-bold mb-8 md:mb-12"
-          data-aos="fade-up"
-        >
-          Meet Our Expert Doctors
-        </motion.h2>
-        {loading ? (
-          <motion.div
-            className="flex justify-center items-center h-64"
-            variants={spinnerVariants}
-            animate="animate"
-          >
-            <FaSpinner className="text-blue-600 text-4xl" />
-          </motion.div>
-        ) : error ? (
-          <motion.div
-            className="text-center text-red-600 text-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            Error: {error}. Please try again later.
-          </motion.div>
-        ) : doctors.length === 0 ? (
-          <motion.div
-            className="text-center text-gray-600 text-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            No doctors available at this time.
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 px-4 sm:px-0">
-            {doctors.map((doctor, index) => (
-              <motion.div
-                key={doctor.id}
-                className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg text-center relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:bg-blue-50"
+                key={i}
+                className={`${service.color} p-8 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300`}
                 variants={cardVariants}
-                whileHover={{ scale: 1.05, y: -10 }}
-                data-aos="fade-up"
-                data-aos-delay={index * 100}
+                custom={i}
+                whileHover={{ y: -10 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-0 hover:opacity-50 transition-opacity duration-500" />
-                <div className="relative z-10">
-                  <motion.img
-                    src={hosimg}
-                    alt={doctor.name}
-                    className="border-4 border-blue-200 h-32 w-32 sm:h-40 sm:w-40 rounded-full mb-4 mx-auto object-cover"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                  <h3 className="text-lg sm:text-2xl text-blue-900 font-semibold mb-2">{doctor.name}</h3>
-                  <p className="text-blue-600 font-medium text-sm sm:text-base">{doctor.specialty}</p>
-                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed mt-3">
-                    {doctor.description.split('.')[0] + '.'}
-                  </p>
-                  <motion.button
-                    onClick={() => setSelectedDoctor(doctor)}
-                    className="mt-4 sm:mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    View Profile
-                  </motion.button>
+                <div className="mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-sm">
+                    {service.icon}
+                  </div>
                 </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{service.title}</h3>
+                <p className="text-gray-600 mb-6">{service.description}</p>
+                <Link to={service.link}>
+                  <motion.button
+                    className="text-blue-600 font-semibold flex items-center gap-2"
+                    whileHover={{ x: 5 }}
+                  >
+                    Learn more
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </motion.button>
+                </Link>
               </motion.div>
             ))}
           </div>
-        )}
+        </div>
+      </motion.section>
+
+      {/* Doctors Section */}
+<motion.section
+  ref={doctorsRef}
+  className="py-16 sm:py-24 bg-gradient-to-b from-white to-blue-50"
+  variants={containerVariants}
+  initial="hidden"
+  animate={doctorsControls}
+>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <motion.div className="text-center mb-16" variants={fadeUpVariants}>
+      <motion.h2
+        className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4"
+        variants={fadeUpVariants}
+      >
+        Meet Our <span className="text-blue-600">Expert</span> Team
+      </motion.h2>
+      <motion.p
+        className="text-lg text-gray-600 max-w-3xl mx-auto"
+        variants={fadeUpVariants}
+      >
+        Our dedicated healthcare professionals are committed to providing you with the best medical care.
+      </motion.p>
+    </motion.div>
+
+    {loading ? (
+      <motion.div
+        className="flex justify-center items-center h-64"
+        variants={spinnerVariants}
+        animate="animate"
+      >
+        <FaSpinner className="text-blue-600 text-4xl" />
       </motion.div>
+    ) : error ? (
+      <motion.div
+        className="text-center text-red-600 text-lg"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        Error: {error}. Please try again later.
+      </motion.div>
+    ) : doctors.length === 0 ? (
+      <motion.div
+        className="text-center text-gray-600 text-lg"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        No doctors available at this time.
+      </motion.div>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {doctors.map((doctor, i) => (
+          <motion.div
+            key={doctor.id}
+            className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            variants={cardVariants}
+            custom={i}
+            whileHover={{ y: -10 }}
+          >
+            <div className="relative">
+              {/* Background Image */}
+              <img
+                src={hosimg}
+                alt={doctor.name}
+                className="w-full h-64 object-cover rounded-t-2xl"
+              />
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-t-2xl" />
+
+              {/* Center Circular Doctor Image */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                      <img
+                        src={docimg}
+                        alt={doctor.name}
+                        className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-xl"
+                      />
+               </div>
+
+              {/* Doctor Info Bottom Left */}
+              <div className="absolute bottom-4 left-4 z-10">
+                <h3 className="text-xl font-bold text-white">{doctor.name}</h3>
+                <p className="text-blue-200">{doctor.specialty}</p>
+              </div>
+            </div>
+
+            {/* Card Body */}
+            <div className="p-6">
+              <p className="text-gray-600 mb-4 line-clamp-2">{doctor.description}</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                  <MdSchool /> {doctor.education.split(",")[0]}
+                </span>
+                <span className="inline-flex items-center gap-1 bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">
+                  <MdWork /> {doctor.experience}
+                </span>
+              </div>
+              <motion.button
+                onClick={() => setSelectedDoctor(doctor)}
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                View Profile
+              </motion.button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    )}
+  </div>
+</motion.section>
+
 
       {/* Doctor Profile Modal */}
-      {selectedDoctor && (
-        <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setSelectedDoctor(null)}
-        >
+      <AnimatePresence>
+        {selectedDoctor && (
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-lg md:max-w-xl p-6 sm:p-8 relative overflow-y-auto max-h-[90vh]"
-            variants={modalVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedDoctor(null)}
           >
-            <motion.button
-              onClick={() => setSelectedDoctor(null)}
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-xl sm:text-2xl font-bold"
-              whileHover={{ scale: 1.2, rotate: 90 }}
-              transition={{ duration: 0.3 }}
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={(e) => e.stopPropagation()}
             >
-              ×
-            </motion.button>
-            <motion.div className="flex flex-col items-center" variants={containerVariants}>
-              <motion.img
-                src={hosimg}
-                alt={selectedDoctor.name}
-                className="border-4 border-blue-200 h-24 w-24 sm:h-32 sm:w-32 rounded-full mb-4 object-cover"
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
-              />
-              <motion.h3
-                className="text-xl sm:text-2xl md:text-3xl text-blue-900 font-semibold mb-2 text-center"
-                variants={textVariants}
-              >
-                {selectedDoctor.name}
-              </motion.h3>
-              <motion.p
-                className="text-blue-600 font-medium text-sm sm:text-base md:text-lg mb-4"
-                variants={textVariants}
-              >
-                {selectedDoctor.specialty}
-              </motion.p>
-              <motion.div className="text-gray-700 text-sm sm:text-base md:text-lg space-y-3" variants={containerVariants}>
-                <p>
-                  <strong>About:</strong> {selectedDoctor.description}
-                </p>
-                <p>
-                  <strong>Education:</strong> {selectedDoctor.education}
-                </p>
-                <p>
-                  <strong>Experience:</strong> {selectedDoctor.experience}
-                </p>
-                <p>
-                  <strong>Contact:</strong> {selectedDoctor.contact}
-                </p>
-              </motion.div>
-              <motion.button
-                onClick={() => setSelectedDoctor(null)}
-                className="mt-6 bg-blue-500 text-white font-medium px-4 sm:px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition-all duration-300"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                variants={buttonVariants}
-              >
-                Close
-              </motion.button>
+              <div className="relative">
+                <img 
+                  src={hosimg} 
+                  alt={selectedDoctor.name} 
+                  className="w-full h-64 object-cover"
+                />
+                <button 
+                  onClick={() => setSelectedDoctor(null)}
+                  className="absolute top-4 right-4 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-md transition-colors duration-300"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                  <h3 className="text-2xl font-bold text-white">{selectedDoctor.name}</h3>
+                  <p className="text-blue-200">{selectedDoctor.specialty}</p>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">About</h4>
+                  <p className="text-gray-600">{selectedDoctor.description}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <MdSchool className="text-blue-600" /> Education
+                    </h4>
+                    <p className="text-gray-600">{selectedDoctor.education}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <MdWork className="text-blue-600" /> Experience
+                    </h4>
+                    <p className="text-gray-600">{selectedDoctor.experience}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <MdEmail className="text-blue-600" /> Contact
+                  </h4>
+                  <p className="text-gray-600">{selectedDoctor.contact}</p>
+                </div>
+                
+                <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                  <motion.button
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-300 flex items-center justify-center gap-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleBookAppointment}
+                  >
+                    <FaCalendarAlt /> Book Appointment
+                  </motion.button>
+                  <button
+                    className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition-colors duration-300"
+                    onClick={() => setSelectedDoctor(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
       <Footer />
-    </motion.div>
+    </div>
   );
 }
-

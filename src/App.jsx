@@ -134,7 +134,7 @@ const ChatbotWrapper = () => {
 
 export default function App() {
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-white min-h-screen">
+    <div className="bg-white min-h-screen">
       <AuthProvider>
         <BrowserRouter>
           <main>

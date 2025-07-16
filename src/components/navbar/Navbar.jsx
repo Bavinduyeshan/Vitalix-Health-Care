@@ -1,36 +1,54 @@
-
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { NavbarMenu } from "../mockdata/data";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown, User, Settings, LogOut, Shield } from "lucide-react";
 import profileimg from "../../assets/profileimg.jpg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false); // Track admin role
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Check login status and role on mount
+  // Include both /about and /contact for white background pages
+  const isWhitePage = ["/about", "/contact"].includes(location.pathname);
+  const shouldShowSolidNavbar = scrolled || isWhitePage;
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userRole = localStorage.getItem("userRole");
     setIsLoggedIn(!!token);
-    setIsAdmin(userRole === "admin"); // Set to true if role is "admin"
+    setIsAdmin(userRole === "admin");
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleRegisterClick = () => navigate("/register");
   const handleLoginClick = () => navigate("/login");
-  const handleProfileClick = () => navigate("/profile");
-  const handleAdminPanelClick = () => navigate("/admin");
+  const handleProfileClick = () => {
+    navigate("/profile");
+    setProfileOpen(false);
+    setMenuOpen(false);
+  };
+  const handleAdminPanelClick = () => {
+    navigate("/admin");
+    setProfileOpen(false);
+    setMenuOpen(false);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userRole"); // Clear role
+    localStorage.removeItem("userRole");
     setIsLoggedIn(false);
-    setIsAdmin(false); // Reset admin status
+    setIsAdmin(false);
     setProfileOpen(false);
     setMenuOpen(false);
     navigate("/");
@@ -41,238 +59,300 @@ export default function Navbar() {
 
   const navbarVariants = {
     hidden: { y: -50, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: "easeOut" } },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } },
   };
 
   const mobileMenuVariants = {
-    hidden: { opacity: 0, height: 0 },
-    visible: { opacity: 1, height: "auto", transition: { duration: 0.4, ease: "easeInOut" } },
-    exit: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3, ease: "easeInOut" } },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.4, ease: "easeInOut", staggerChildren: 0.1 } },
+  };
+
+  const menuItemVariants = {
+    hidden: { x: -20, opacity: 0 },
+    visible: { x: 0, opacity: 1 },
   };
 
   const profileVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: "easeOut" } },
-    exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } },
+    hidden: { opacity: 0, y: 10, scale: 0.95, transition: { duration: 0.2 } },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } },
   };
 
   return (
     <motion.nav
-      className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg rounded-3xl m-1"
+      className={`fixed w-full z-50 ${
+        shouldShowSolidNavbar ? "bg-white/90 backdrop-blur-md shadow-lg" : "bg-transparent"
+      } transition-all duration-300`}
       variants={navbarVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="container2 flex items-center justify-between py-4 px-6">
-        {/* Logo Section */}
-        <motion.div
-          className="text-2xl flex items-center gap-2 font-bold"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.3 }}
-        >
-          <span className="text-white">Vitalix</span>
-          <span className="text-blue-200">Health Care</span>
-        </motion.div>
-
-        {/* Desktop Navigation Menu */}
-        <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-          <ul className="flex items-center gap-24 text-white font-medium text-xl">
-            {NavbarMenu.map((item) => (
-              <motion.li
-                key={item.id}
-                whileHover={{ y: -2, color: "#93c5fd" }}
-                transition={{ duration: 0.2 }}
-              >
-                <a href={item.link} className="hover:text-blue-200 transition duration-300">
-                  {item.title}
-                </a>
-              </motion.li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Buttons & Profile */}
-        <div className="hidden md:flex items-center gap-4">
-          {!isLoggedIn ? (
-            <>
-              <motion.button
-                className="hover:bg-blue-600 text-white font-semibold rounded-md border-2 border-white px-4 py-2 transition duration-200"
-                onClick={handleLoginClick}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Login
-              </motion.button>
-              <motion.button
-                className="bg-blue-500 text-white font-semibold rounded-md px-4 py-2 hover:bg-blue-600 transition duration-200"
-                onClick={handleRegisterClick}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Register
-              </motion.button>
-            </>
-          ) : (
-            <motion.div
-              className="relative"
-              onHoverStart={() => {
-                clearTimeout(window.profileMenuTimeout);
-                setProfileOpen(true);
-              }}
-              onHoverEnd={() => {
-                window.profileMenuTimeout = setTimeout(() => {
-                  setProfileOpen(false);
-                }, 300);
-              }}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          <motion.div
+            className="flex items-center"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className={`flex items-center cursor-pointer ${
+                shouldShowSolidNavbar ? "text-blue-600" : "text-white"
+              }`}
+              onClick={() => navigate("/")}
             >
-              <motion.img
-                src={profileimg}
-                alt="Profile"
-                className="w-10 h-10 rounded-full cursor-pointer border-2 border-white"
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
+              <motion.span
+                className="text-3xl font-bold"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                Vitalix
+              </motion.span>
+              <motion.span
+                className={`text-3xl font-light ml-1 ${
+                  shouldShowSolidNavbar ? "text-blue-400" : "text-blue-200"
+                }`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                Care
+              </motion.span>
+              <motion.div
+                className={`w-2 h-2 rounded-full ml-2 ${
+                  shouldShowSolidNavbar ? "bg-blue-500" : "bg-blue-300"
+                }`}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.4, type: "spring" }}
               />
-              {profileOpen && (
-                <motion.div
-                  className="absolute right-0 mt-2 w-48 bg-white text-gray-800 shadow-lg rounded-lg py-2 z-10"
-                  variants={profileVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  onHoverStart={() => {
-                    clearTimeout(window.profileMenuTimeout);
-                    setProfileOpen(true);
-                  }}
-                  onHoverEnd={() => {
-                    window.profileMenuTimeout = setTimeout(() => {
-                      setProfileOpen(false);
-                    }, 300);
-                  }}
+            </div>
+          </motion.div>
+
+          <div className="hidden md:flex items-center space-x-8">
+            <ul className="flex space-x-8">
+              {NavbarMenu.map((item, index) => (
+                <motion.li
+                  key={item.id}
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 + index * 0.1, type: "spring", stiffness: 100 }}
                 >
                   <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleProfileClick();
-                    }}
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
+                    href={item.link}
+                    className={`relative px-1 py-2 text-lg font-semibold transition-colors ${
+                      shouldShowSolidNavbar ? "text-gray-700 hover:text-blue-600" : "text-white hover:text-blue-200"
+                    }`}
                   >
-                    Profile
+                    {item.title}
                   </a>
-                  <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-200">
-                    Settings
-                  </a>
-                  {isAdmin && (
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleAdminPanelClick();
-                      }}
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-                    >
-                      Admin Panel
-                    </a>
-                  )}
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleLogout();
-                    }}
-                    className="block px-4 py-2 text-red-500 hover:bg-gray-200"
-                  >
-                    Logout
-                  </a>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-        </div>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <motion.button onClick={toggleMenu} whileHover={{ scale: 1.1 }}>
-            {menuOpen ? <X size={28} /> : <Menu size={28} />}
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <motion.div
-        className="md:hidden bg-white text-gray-800"
-        initial="hidden"
-        animate={menuOpen ? "visible" : "hidden"}
-        exit="exit"
-        variants={mobileMenuVariants}
-      >
-        <div className="p-4">
-          <ul className="flex flex-col gap-4 font-medium">
-            {NavbarMenu.map((item) => (
-              <motion.li
-                key={item.id}
-                whileHover={{ x: 5, color: "#1e40af" }}
-                transition={{ duration: 0.2 }}
-              >
-                <a href={item.link} className="hover:text-blue-700 transition duration-300">
-                  {item.title}
-                </a>
-              </motion.li>
-            ))}
-          </ul>
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="hidden md:flex items-center gap-4">
             {!isLoggedIn ? (
-              <>
+              <motion.div
+                className="flex space-x-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
                 <motion.button
-                  className="hover:bg-blue-600 text-blue-600 font-semibold hover:text-white rounded-md border-2 border-blue-600 px-4 py-2 transition duration-200"
+                  className={`px-6 py-2 rounded-full font-semibold text-base transition-all ${
+                    shouldShowSolidNavbar
+                      ? "text-blue-600 hover:bg-blue-50 border border-blue-600"
+                      : "text-white hover:bg-white/10 border border-white"
+                  }`}
                   onClick={handleLoginClick}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   Login
                 </motion.button>
                 <motion.button
-                  className="bg-blue-500 text-white font-semibold rounded-md px-4 py-2 hover:bg-blue-600 transition duration-200"
+                  className={`px-6 py-2 rounded-full font-semibold text-base transition-all ${
+                    shouldShowSolidNavbar
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-white text-blue-600 hover:bg-white/90"
+                  }`}
                   onClick={handleRegisterClick}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   Register
                 </motion.button>
-              </>
+              </motion.div>
             ) : (
-              <>
-                <motion.button
-                  className="bg-blue-500 text-white font-semibold rounded-md px-4 py-2 hover:bg-blue-600 transition duration-200"
-                  onClick={handleProfileClick}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <motion.div
+                className="relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                <motion.div
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={toggleProfileMenu}
+                  whileHover={{ scale: 1.03 }}
                 >
-                  Profile
-                </motion.button>
-                {isAdmin && (
-                  <motion.button
-                    className="bg-blue-500 text-white font-semibold rounded-md px-4 py-2 hover:bg-blue-600 transition duration-200"
-                    onClick={handleAdminPanelClick}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Admin Panel
-                  </motion.button>
-                )}
-                <motion.button
-                  className="bg-red-500 text-white font-semibold rounded-md px-4 py-2 hover:bg-red-600 transition duration-200"
-                  onClick={handleLogout}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Logout
-                </motion.button>
-              </>
+                  <img
+                    src={profileimg}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-white/80"
+                  />
+                  <ChevronDown
+                    size={20}
+                    className={`transition-transform ${profileOpen ? "rotate-180" : ""} ${
+                      shouldShowSolidNavbar ? "text-gray-700" : "text-white"
+                    }`}
+                  />
+                </motion.div>
+
+                <AnimatePresence>
+                  {profileOpen && (
+                    <motion.div
+                      className={`absolute right-0 mt-2 w-56 origin-top-right rounded-xl shadow-lg py-1 z-50 ${
+                        shouldShowSolidNavbar ? "bg-white" : "bg-white/90 backdrop-blur-md"
+                      }`}
+                      variants={profileVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                    >
+                      <div className="px-1 py-1">
+                        <motion.button
+                          onClick={handleProfileClick}
+                          className="group flex w-full items-center rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                          whileHover={{ x: 3 }}
+                        >
+                          <User size={20} className="mr-2 text-blue-500" /> Profile
+                        </motion.button>
+                        <motion.button
+                          className="group flex w-full items-center rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                          whileHover={{ x: 3 }}
+                        >
+                          <Settings size={20} className="mr-2 text-blue-500" /> Settings
+                        </motion.button>
+                        {isAdmin && (
+                          <motion.button
+                            onClick={handleAdminPanelClick}
+                            className="group flex w-full items-center rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                            whileHover={{ x: 3 }}
+                          >
+                            <Shield size={20} className="mr-2 text-blue-500" /> Admin Panel
+                          </motion.button>
+                        )}
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <motion.button
+                          onClick={handleLogout}
+                          className="group flex w-full items-center rounded-lg px-3 py-2 text-base text-red-500 hover:bg-red-50 hover:text-red-600"
+                          whileHover={{ x: 3 }}
+                        >
+                          <LogOut size={20} className="mr-2" /> Logout
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             )}
           </div>
+
+          <div className="md:hidden -mr-2 flex items-center">
+            <motion.button
+              onClick={toggleMenu}
+              className={`inline-flex items-center justify-center p-2 rounded-md ${
+                shouldShowSolidNavbar ? "text-gray-700 hover:bg-gray-100" : "text-white hover:bg-white/10"
+              }`}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </motion.button>
+          </div>
         </div>
-      </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="md:hidden"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={mobileMenuVariants}
+          >
+            <div
+              className={`px-2 pt-2 pb-4 space-y-1 sm:px-3 ${
+                shouldShowSolidNavbar ? "bg-white" : "bg-white/95 backdrop-blur-md"
+              }`}
+            >
+              {NavbarMenu.map((item) => (
+                <motion.a
+                  key={item.id}
+                  href={item.link}
+                  className="block px-3 py-3 rounded-md text-lg font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                  variants={menuItemVariants}
+                >
+                  {item.title}
+                </motion.a>
+              ))}
+              <div className="pt-4 border-t border-gray-200">
+                {!isLoggedIn ? (
+                  <div className="flex flex-col space-y-3 px-2">
+                    <motion.button
+                      onClick={handleLoginClick}
+                      className="w-full px-4 py-2 text-center rounded-full border border-blue-600 text-blue-600 text-base font-semibold hover:bg-blue-50"
+                      variants={menuItemVariants}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Login
+                    </motion.button>
+                    <motion.button
+                      onClick={handleRegisterClick}
+                      className="w-full px-4 py-2 text-center rounded-full bg-blue-600 text-white text-base font-semibold hover:bg-blue-700"
+                      variants={menuItemVariants}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Register
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-3 px-2">
+                    <motion.button
+                      onClick={handleProfileClick}
+                      className="w-full px-4 py-2 text-center rounded-full bg-blue-600 text-white text-base font-semibold hover:bg-blue-700"
+                      variants={menuItemVariants}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Profile
+                    </motion.button>
+                    {isAdmin && (
+                      <motion.button
+                        onClick={handleAdminPanelClick}
+                        className="w-full px-4 py-2 text-center rounded-full bg-blue-600 text-white text-base font-semibold hover:bg-blue-700"
+                        variants={menuItemVariants}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Admin Panel
+                      </motion.button>
+                    )}
+                    <motion.button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-center rounded-full bg-red-500 text-white text-base font-semibold hover:bg-red-600"
+                      variants={menuItemVariants}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Logout
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }
